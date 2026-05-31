@@ -1,0 +1,3329 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#17213a">
+  <title>肉鸽跳一跳</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f7fbff;
+      --muted: rgba(247, 251, 255, 0.66);
+      --glass: rgba(13, 24, 43, 0.58);
+      --glass-strong: rgba(10, 18, 34, 0.84);
+      --line: rgba(255, 255, 255, 0.16);
+      --accent: #ffd166;
+      --mint: #74e0a9;
+      --pink: #ff5f86;
+      --blue: #7bd8ff;
+      --app-width: 100vw;
+      --app-height: 100dvh;
+      --hud-side: 22px;
+      --hud-left: max(var(--hud-side), env(safe-area-inset-left));
+      --hud-right: max(var(--hud-side), env(safe-area-inset-right));
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-drag: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    html,
+    body {
+      width: var(--app-width);
+      min-width: var(--app-width);
+      height: var(--app-height);
+      min-height: var(--app-height);
+      margin: 0;
+      overflow: hidden;
+      background: #111a31;
+      color: var(--ink);
+      font-family: ui-rounded, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+      touch-action: none;
+      overscroll-behavior: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    body {
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+
+    #game {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--app-width);
+      height: var(--app-height);
+      display: block;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .hud {
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top));
+      left: var(--hud-left);
+      right: var(--hud-right);
+      z-index: 4;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .status {
+      display: grid;
+      gap: 5px;
+      justify-items: start;
+      min-width: 0;
+    }
+
+    .chip {
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 6px 9px;
+      background: var(--glass);
+      box-shadow: 0 10px 28px rgba(3, 8, 20, 0.22);
+      backdrop-filter: blur(14px);
+      font-size: 13px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .chip strong {
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .hearts {
+      color: #ff6f91;
+      text-shadow: 0 2px 10px rgba(255, 95, 134, 0.35);
+      font-size: 16px;
+      letter-spacing: 1px;
+    }
+
+    .ability-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      max-width: min(56vw, 260px);
+    }
+
+    .ability-tag {
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 7px;
+      padding: 3px 6px;
+      background: rgba(13, 24, 43, 0.48);
+      box-shadow: 0 8px 18px rgba(3, 8, 20, 0.16);
+      backdrop-filter: blur(12px);
+      color: rgba(247, 251, 255, 0.78);
+      font-size: 11px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .ability-icon {
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .scorebox {
+      display: grid;
+      gap: 6px;
+      justify-items: end;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: right;
+      min-width: 0;
+    }
+
+    .scorebox b {
+      color: var(--ink);
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .best-record {
+      max-width: min(58vw, 270px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .best-name {
+      display: inline-block;
+      max-width: min(24vw, 100px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: bottom;
+      color: rgba(247, 251, 255, 0.86);
+      font-weight: 800;
+    }
+
+    .test-toggle {
+      pointer-events: auto;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 4px 7px 4px 9px;
+      background: var(--glass);
+      box-shadow: 0 10px 28px rgba(3, 8, 20, 0.22);
+      backdrop-filter: blur(14px);
+      color: rgba(247, 251, 255, 0.78);
+      font-size: 12px;
+      line-height: 1;
+      white-space: nowrap;
+      touch-action: manipulation;
+    }
+
+    .test-toggle input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .switch-track {
+      position: relative;
+      width: 34px;
+      height: 20px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+      box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.28);
+      transition: background 150ms ease;
+    }
+
+    .switch-track::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #f7fbff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.32);
+      transition: transform 150ms ease;
+    }
+
+    .test-toggle input:checked + .switch-track {
+      background: linear-gradient(90deg, #74e0a9, #ffd166);
+    }
+
+    .test-toggle input:checked + .switch-track::after {
+      transform: translateX(14px);
+    }
+
+    .charge-meter {
+      position: fixed;
+      left: 50%;
+      bottom: max(24px, env(safe-area-inset-bottom) + 20px);
+      z-index: 5;
+      width: min(calc(var(--app-width) - var(--hud-left) - var(--hud-right)), 480px);
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      padding: 9px 11px;
+      background: rgba(9, 18, 34, 0.62);
+      box-shadow: 0 16px 38px rgba(3, 8, 20, 0.28);
+      backdrop-filter: blur(16px);
+      color: rgba(247, 251, 255, 0.78);
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1;
+      pointer-events: none;
+      opacity: 0;
+      transform: translate(-50%, 10px);
+      transition: opacity 150ms ease, transform 150ms ease;
+    }
+
+    .charge-meter.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .charge-track {
+      position: relative;
+      height: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 1px 7px rgba(0, 0, 0, 0.34);
+      overflow: hidden;
+    }
+
+    .charge-fill {
+      position: absolute;
+      top: 2px;
+      bottom: 2px;
+      left: 2px;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #74e0a9, #ffd166 62%, #ff6f91);
+      box-shadow: 0 0 14px rgba(255, 209, 102, 0.42);
+    }
+
+    .charge-state {
+      min-width: 30px;
+      text-align: right;
+      color: rgba(247, 251, 255, 0.7);
+    }
+
+    body.compact-ui {
+      --hud-side: 20px;
+    }
+
+    body.compact-ui .hud {
+      top: max(8px, env(safe-area-inset-top));
+    }
+
+    body.compact-ui .chip {
+      min-height: 28px;
+      padding: 5px 8px;
+      font-size: 12px;
+    }
+
+    body.compact-ui .hearts {
+      font-size: 15px;
+    }
+
+    body.compact-ui .scorebox {
+      gap: 4px;
+      font-size: 11px;
+    }
+
+    body.compact-ui .scorebox b {
+      font-size: 20px;
+    }
+
+    body.compact-ui .test-toggle {
+      height: 29px;
+      padding: 4px 6px 4px 8px;
+      font-size: 11px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(max(86px, env(safe-area-inset-bottom) + 84px));
+      z-index: 5;
+      max-width: min(82vw, 390px);
+      transform: translate(-50%, 12px);
+      opacity: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 13px;
+      color: var(--ink);
+      background: rgba(8, 16, 31, 0.76);
+      box-shadow: 0 18px 44px rgba(3, 8, 20, 0.35);
+      backdrop-filter: blur(16px);
+      font-size: 13px;
+      line-height: 1.35;
+      text-align: center;
+      pointer-events: none;
+      transition: opacity 170ms ease, transform 170ms ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .guide-button {
+      position: fixed;
+      right: max(20px, env(safe-area-inset-right) + 16px);
+      bottom: max(22px, env(safe-area-inset-bottom) + 18px);
+      z-index: 6;
+      min-width: 62px;
+      height: 38px;
+      border: 1px solid rgba(226, 255, 230, 0.45);
+      border-radius: 999px;
+      padding: 0 15px;
+      background: linear-gradient(180deg, #7bef83, #28ae4c);
+      box-shadow: 0 12px 28px rgba(14, 73, 31, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+      color: #062312;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 950;
+      line-height: 1;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+      pointer-events: auto;
+      touch-action: manipulation;
+    }
+
+    .guide-button:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .guide-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      overflow: hidden;
+      padding: max(30px, env(safe-area-inset-top) + 16px) 22px max(24px, env(safe-area-inset-bottom) + 18px);
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(8, 13, 25, 0.76), rgba(3, 6, 12, 0.90)),
+        radial-gradient(circle at 50% 20%, rgba(123, 216, 255, 0.22), rgba(123, 216, 255, 0) 42%),
+        rgba(9, 16, 30, 0.94);
+      pointer-events: auto;
+    }
+
+    .guide-layer.show {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 14px;
+    }
+
+    .guide-title {
+      margin: 0;
+      color: #fff7c9;
+      font-size: clamp(34px, 10vw, 54px);
+      line-height: 0.98;
+      font-weight: 950;
+      text-align: center;
+      text-shadow:
+        0 3px 0 #1c416a,
+        0 6px 0 #7c4a22,
+        0 14px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .guide-subtitle {
+      margin: 7px 0 0;
+      color: rgba(247, 251, 255, 0.72);
+      font-size: 13px;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    .guide-flow {
+      position: relative;
+      min-height: 0;
+      display: grid;
+      align-content: center;
+      gap: 30px;
+      justify-items: center;
+      max-width: 500px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .guide-card {
+      position: relative;
+      width: min(94%, 420px);
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      align-items: center;
+      gap: 11px;
+      min-height: 82px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: rgba(10, 20, 38, 0.72);
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(16px);
+    }
+
+    .guide-icon {
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: linear-gradient(150deg, #ffe57a, #ff835f);
+      box-shadow: 0 9px 18px rgba(255, 131, 95, 0.22);
+      color: #16223b;
+      font-size: 25px;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .guide-card:nth-child(2) .guide-icon {
+      background: linear-gradient(150deg, #7bd8ff, #74e0a9);
+    }
+
+    .guide-card:nth-child(3) .guide-icon {
+      background: linear-gradient(150deg, #ff87a8, #ffd166);
+    }
+
+    .guide-card:nth-child(4) .guide-icon {
+      background: linear-gradient(150deg, #a9f58c, #52c4ff);
+    }
+
+    .guide-card-title {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 16px;
+      line-height: 1.2;
+      font-weight: 950;
+      color: #fff;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.34);
+    }
+
+    .guide-card-text {
+      display: block;
+      color: rgba(247, 251, 255, 0.72);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .guide-continue {
+      width: min(100%, 360px);
+      height: 48px;
+      justify-self: center;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #fff7c9;
+      font: inherit;
+      font-size: 26px;
+      line-height: 1;
+      font-weight: 950;
+      text-shadow: 0 3px 0 #1c416a, 0 8px 20px rgba(0, 0, 0, 0.46);
+      touch-action: manipulation;
+    }
+
+    @media (max-height: 720px) {
+      .guide-layer {
+        padding-top: max(22px, env(safe-area-inset-top) + 10px);
+        padding-bottom: max(18px, env(safe-area-inset-bottom) + 12px);
+        gap: 8px;
+      }
+
+      .guide-title {
+        font-size: clamp(29px, 8.5vw, 43px);
+      }
+
+      .guide-subtitle {
+        margin-top: 5px;
+        font-size: 12px;
+      }
+
+      .guide-flow {
+        gap: 9px;
+      }
+
+      .guide-card {
+        width: min(96%, 390px);
+        min-height: 68px;
+        grid-template-columns: 44px 1fr;
+        gap: 9px;
+        padding: 8px 10px;
+      }
+
+      .guide-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
+      }
+
+      .guide-card-title {
+        margin-bottom: 3px;
+        font-size: 14px;
+      }
+
+      .guide-card-text {
+        font-size: 11px;
+      }
+
+      .guide-continue {
+        height: 40px;
+        font-size: 22px;
+      }
+    }
+
+    .choice-layer,
+    .record-layer,
+    .retry-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 8;
+      display: none;
+      align-items: end;
+      justify-content: center;
+      padding: 18px;
+      padding-bottom: max(18px, env(safe-area-inset-bottom));
+      background: linear-gradient(180deg, rgba(5, 9, 19, 0.10), rgba(5, 9, 19, 0.72));
+      pointer-events: auto;
+    }
+
+    .record-layer {
+      z-index: 9;
+      align-items: center;
+      background: linear-gradient(180deg, rgba(5, 9, 19, 0.22), rgba(5, 9, 19, 0.82));
+    }
+
+    .retry-layer {
+      z-index: 9;
+      align-items: center;
+      background: linear-gradient(180deg, rgba(5, 9, 19, 0.16), rgba(5, 9, 19, 0.78));
+    }
+
+    .choice-layer.show,
+    .record-layer.show,
+    .retry-layer.show {
+      display: flex;
+    }
+
+    .retry-layer .panel {
+      width: min(86vw, 360px);
+      text-align: center;
+    }
+
+    .retry-layer .panel-head {
+      padding: 26px 22px;
+      border-bottom: 0;
+    }
+
+    .panel {
+      width: min(100%, 450px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      background: rgba(9, 18, 34, 0.88);
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.46);
+      backdrop-filter: blur(22px);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: grid;
+      gap: 5px;
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .panel-kicker {
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .panel-title {
+      font-size: 22px;
+      line-height: 1.15;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .panel-copy {
+      color: rgba(247, 251, 255, 0.68);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .choices {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .choice {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      gap: 10px;
+      align-items: center;
+      min-height: 76px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 8px;
+      padding: 11px 12px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.065);
+      font: inherit;
+      text-align: left;
+      touch-action: manipulation;
+    }
+
+    .choice:active {
+      transform: translateY(1px);
+      background: rgba(255, 255, 255, 0.11);
+    }
+
+    .choice-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: linear-gradient(150deg, rgba(255, 209, 102, 0.95), rgba(255, 95, 134, 0.88));
+      color: #17213a;
+      font-weight: 950;
+      box-shadow: 0 10px 22px rgba(255, 95, 134, 0.24);
+    }
+
+    .choice:nth-child(2) .choice-mark {
+      background: linear-gradient(150deg, rgba(123, 216, 255, 0.96), rgba(116, 224, 169, 0.88));
+    }
+
+    .choice-title {
+      display: block;
+      font-weight: 900;
+      font-size: 15px;
+      line-height: 1.25;
+      margin-bottom: 4px;
+    }
+
+    .choice-text {
+      display: block;
+      color: rgba(247, 251, 255, 0.68);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .record-body {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .record-input {
+      width: 100%;
+      height: 44px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      padding: 0 12px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.08);
+      font: inherit;
+      font-size: 16px;
+      outline: none;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    .record-input:focus {
+      border-color: rgba(255, 209, 102, 0.62);
+      box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.12);
+    }
+
+    .record-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .record-button {
+      height: 42px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 8px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.07);
+      font: inherit;
+      font-weight: 900;
+      touch-action: manipulation;
+    }
+
+    .record-button.primary {
+      border-color: rgba(255, 209, 102, 0.42);
+      background: linear-gradient(150deg, rgba(255, 209, 102, 0.96), rgba(255, 95, 134, 0.86));
+      color: #17213a;
+    }
+
+    .record-button:active {
+      transform: translateY(1px);
+    }
+
+    @media (min-width: 720px) {
+      .choice-layer,
+      .record-layer,
+      .retry-layer {
+        align-items: center;
+        padding: 28px;
+      }
+
+      .panel {
+        width: min(74vw, 560px);
+      }
+
+      .panel-head {
+        gap: 8px;
+        padding: 24px 26px 20px;
+      }
+
+      .panel-kicker {
+        font-size: 15px;
+      }
+
+      .panel-title {
+        font-size: 30px;
+      }
+
+      .panel-copy {
+        font-size: 17px;
+      }
+
+      .choices {
+        gap: 16px;
+        padding: 18px;
+      }
+
+      .choice {
+        grid-template-columns: 56px 1fr;
+        gap: 16px;
+        min-height: 110px;
+        padding: 18px 20px;
+      }
+
+      .choice-mark {
+        width: 56px;
+        height: 56px;
+        font-size: 22px;
+      }
+
+      .choice-title {
+        font-size: 21px;
+        margin-bottom: 7px;
+      }
+
+      .choice-text {
+        font-size: 16px;
+        line-height: 1.45;
+      }
+
+      .record-body {
+        gap: 16px;
+        padding: 20px;
+      }
+
+      .record-input {
+        height: 54px;
+        padding: 0 16px;
+        font-size: 20px;
+      }
+
+      .record-actions {
+        gap: 14px;
+      }
+
+      .record-button {
+        height: 52px;
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" aria-label="肉鸽跳一跳游戏画面"></canvas>
+
+  <div class="hud" aria-hidden="true">
+    <div class="status">
+      <div class="chip hearts" id="hearts">♥ ♥ ♥</div>
+      <div class="ability-bar" id="abilityBar" hidden></div>
+    </div>
+    <div class="scorebox">
+      <label class="test-toggle" aria-label="无限生命模式">
+        <span>无限生命</span>
+        <input id="infiniteLifeToggle" type="checkbox">
+        <span class="switch-track" aria-hidden="true"></span>
+      </label>
+      <span class="best-record">最高分记录：<span class="best-name" id="bestName">匿名</span> <span id="bestScore">0</span></span>
+      <b id="score">1</b>
+    </div>
+  </div>
+
+  <div class="charge-meter" id="chargeMeter" hidden aria-hidden="true">
+    <span>蓄力</span>
+    <span class="charge-track" aria-hidden="true">
+      <span class="charge-fill" id="chargeFill"></span>
+    </span>
+    <span class="charge-state" id="chargeState">待命</span>
+  </div>
+
+  <button class="guide-button" id="guideButton" type="button" hidden>玩法</button>
+
+  <div class="guide-layer" id="guideLayer" aria-hidden="true">
+    <div>
+      <h1 class="guide-title">肉鸽跳一跳</h1>
+      <p class="guide-subtitle">按住、松手、落稳，每一次选择都会改变后面的路。</p>
+    </div>
+    <div class="guide-flow">
+      <div class="guide-card">
+        <span class="guide-icon">🕹️</span>
+        <span>
+          <span class="guide-card-title">蓄力按屏幕跳跃</span>
+          <span class="guide-card-text">按住屏幕蓄力，松手起跳，用预览线判断距离。</span>
+        </span>
+      </div>
+      <div class="guide-card">
+        <span class="guide-icon">🎁</span>
+        <span>
+          <span class="guide-card-title">获得宝箱能力</span>
+          <span class="guide-card-text">到达关键格子会出现选择，组合回血、越格和成长能力。</span>
+        </span>
+      </div>
+      <div class="guide-card">
+        <span class="guide-icon">🧊</span>
+        <span>
+          <span class="guide-card-title">克服环境异变</span>
+          <span class="guide-card-text">红心、溜冰格、伪坡度格会改变落地后的风险。</span>
+        </span>
+      </div>
+      <div class="guide-card">
+        <span class="guide-icon">🏆</span>
+        <span>
+          <span class="guide-card-title">冲击更高分数</span>
+          <span class="guide-card-text">保住生命，跨过更远的平台，不断刷新最高格数。</span>
+        </span>
+      </div>
+    </div>
+    <button class="guide-continue" id="guideClose" type="button">点按任意区域返回</button>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="choice-layer" id="choiceLayer">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-kicker" id="choiceKicker">能力宝箱</div>
+        <div class="panel-title" id="choiceTitle">选择能力</div>
+        <div class="panel-copy" id="choiceCopy"></div>
+      </div>
+      <div class="choices" id="choices"></div>
+    </div>
+  </div>
+
+  <div class="record-layer" id="recordLayer" aria-hidden="true">
+    <form class="panel" id="recordForm">
+      <div class="panel-head">
+        <div class="panel-kicker">新最高分</div>
+        <div class="panel-title">留下名字</div>
+        <div class="panel-copy">本次最高到达第 <span id="recordScore">1</span> 格，输入名字记录一下。</div>
+      </div>
+      <div class="record-body">
+        <input class="record-input" id="recordNameInput" type="text" maxlength="8" autocomplete="off" placeholder="输入名字">
+        <div class="record-actions">
+          <button class="record-button" id="recordSkip" type="button">跳过</button>
+          <button class="record-button primary" type="submit">保存</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="retry-layer" id="retryLayer" aria-hidden="true">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">再试一次吧</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+      const els = {
+        hearts: document.getElementById("hearts"),
+        infiniteLifeToggle: document.getElementById("infiniteLifeToggle"),
+        abilityBar: document.getElementById("abilityBar"),
+        bestName: document.getElementById("bestName"),
+        bestScore: document.getElementById("bestScore"),
+        score: document.getElementById("score"),
+        guideButton: document.getElementById("guideButton"),
+        guideLayer: document.getElementById("guideLayer"),
+        guideClose: document.getElementById("guideClose"),
+        toast: document.getElementById("toast"),
+        choiceLayer: document.getElementById("choiceLayer"),
+        choiceKicker: document.getElementById("choiceKicker"),
+        choiceTitle: document.getElementById("choiceTitle"),
+        choiceCopy: document.getElementById("choiceCopy"),
+        choices: document.getElementById("choices"),
+        recordLayer: document.getElementById("recordLayer"),
+        recordForm: document.getElementById("recordForm"),
+        recordScore: document.getElementById("recordScore"),
+        recordNameInput: document.getElementById("recordNameInput"),
+        recordSkip: document.getElementById("recordSkip"),
+        retryLayer: document.getElementById("retryLayer"),
+        chargeMeter: document.getElementById("chargeMeter"),
+        chargeFill: document.getElementById("chargeFill"),
+        chargeState: document.getElementById("chargeState")
+      };
+
+      const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+      const lerp = (a, b, t) => a + (b - a) * t;
+      const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+      const easeInOut = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      const jumpPowerCurve = t => t * t * (3 - 2 * t);
+      const rand = (min, max) => min + Math.random() * (max - min);
+      const randInt = (min, max) => Math.floor(rand(min, max + 1));
+
+      function sanitizeRecordName(name) {
+        return String(name || "")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 8);
+      }
+
+      function storedBestScore() {
+        return Math.max(0, Number(localStorage.getItem(STORE_KEY) || "0"));
+      }
+
+      const MAX_HEARTS = 5;
+      const START_HEARTS = 5;
+      const CHARGE_DURATION = 1800;
+      const CHOICE_DELAY = 820;
+      const RETRY_PROMPT_DURATION = 1350;
+      const MAX_JUMP_DISTANCE_SCALE = 2.24;
+      const FULL_CHARGE_DISTANCE_SCALE = 2.58;
+      const FULL_CHARGE_DISTANCE_CAP = 660;
+      const FULL_CHARGE_EXTENSION_START = 0.78;
+      const PLATFORM_SIZE_UNIT = 10;
+      const PIECE_SCALE_DELTA = 0.1;
+      const SKIP_GROWTH_BONUS = 3;
+      const LARGE_TILE_LATE_SPREAD_CAP = 0.86;
+      const LARGE_TILE_RANGE_SQUEEZE = 0.18;
+      const STORE_KEY = "rogueJumpBest";
+      const BEST_NAME_KEY = "rogueJumpBestName";
+      const INFINITE_LIFE_KEY = "rogueJumpInfiniteLife";
+      const DEFAULT_BEST_NAME = "匿名";
+      const HEART_AUTO_SIZE_SCALE = 1.14;
+      const HEART_MISS_SIZE_SCALE = 0.86;
+      const RETURN_HEART_COVER_ASSIST = 0.38;
+      const SKIP_GROW_DIRECTION_MATCH_CHANCE = 0.64;
+      const triggerSteps = new Set([5, 10, 15, 20, 25]);
+      const bootParams = new URLSearchParams(window.location.search);
+      const sfxConfig = {
+        jump: { url: "audio/jump-sfx.wav", volume: 0.62 },
+        land: { url: "audio/land-sfx.wav", volume: 1 },
+        fall: { url: "audio/fall-sfx.wav", volume: 1 }
+      };
+      const musicConfig = {
+        url: "audio/bgm.mp3",
+        volume: 0.16,
+        loopEnd: 147.2,
+        fadeMs: 1400
+      };
+
+      if (bootParams.has("resetBest")) {
+        localStorage.setItem(STORE_KEY, "0");
+        localStorage.setItem(BEST_NAME_KEY, DEFAULT_BEST_NAME);
+      }
+
+      const state = {
+        width: 0,
+        height: 0,
+        dpr: 1,
+        scale: 1,
+        time: 0,
+        platforms: [],
+        currentIndex: 0,
+        hearts: START_HEARTS,
+        best: storedBestScore(),
+        bestName: sanitizeRecordName(localStorage.getItem(BEST_NAME_KEY)) || DEFAULT_BEST_NAME,
+        runStartBest: storedBestScore(),
+        pendingRecordScore: 0,
+        infiniteLives: localStorage.getItem(INFINITE_LIFE_KEY) === "1",
+        triggered: new Set(),
+        player: {
+          x: 0,
+          y: 0,
+          z: 0,
+          offsetX: 0,
+          offsetY: 0,
+          squash: 0,
+          tilt: 0,
+          alpha: 1
+        },
+        camera: {
+          x: 0,
+          y: 0,
+          zoom: 1,
+          shake: 0,
+          pulse: 0
+        },
+        charge: {
+          active: false,
+          second: false,
+          start: 0,
+          value: 0,
+          usePreview: false,
+          pointerId: null
+        },
+        jump: null,
+        fail: null,
+        slide: null,
+        recover: null,
+        modal: null,
+        recordOpen: false,
+        retryOpen: false,
+        retryTimer: 0,
+        guideOpen: false,
+        pendingChoice: null,
+        toastTimer: 0,
+        lastSafe: null,
+        sizeUnits: 0,
+        platformSizeBonus: 0,
+        pieceScale: 1,
+        gapScale: 1,
+        chargeMeterUnlocked: false,
+        heartActive: false,
+        heartBias: "normal",
+        returnHeartCoverAssist: false,
+        nextHeartIndex: Infinity,
+        healTexts: [],
+        envMutation: null,
+        abilities: {
+          heartAuto: false,
+          heartMissPreview: false,
+          skipHeal: false,
+          returnHeal: false,
+          skipGrow: false,
+          returnHeartFull: false,
+          forwardDouble: false,
+          backwardDouble: false
+        },
+        previewCharges: 0,
+        bgStars: Array.from({ length: 48 }, () => ({
+          x: Math.random(),
+          y: Math.random(),
+          r: rand(0.7, 2.4),
+          a: rand(0.16, 0.55)
+        }))
+      };
+
+      const audioState = {
+        context: null,
+        raw: {},
+        buffers: {},
+        loadingRaw: {},
+        decoding: {},
+        music: null,
+        musicStarted: false,
+        musicFadeFrame: 0,
+        lastCheerAt: 0
+      };
+
+      const choicesByStep = {
+        5: {
+          kicker: "能力宝箱",
+          title: "红心格子出现",
+          copy: "第 6 格开始会出现红心区域，选择一种触发方式。",
+          choices: [
+            {
+              mark: "A",
+              title: "红心完美",
+              text: "棋子完全盖住红心区域时，自动跳到下一格的随机位置。",
+              apply: () => {
+                state.abilities.heartAuto = true;
+                state.heartBias = "auto";
+                showToast("获得能力：红心完美");
+              }
+            },
+            {
+              mark: "B",
+              title: "红心擦肩",
+              text: "棋子完全没碰到红心区域时，获得 1 次蓄力轨迹预览。",
+              apply: () => {
+                state.abilities.heartMissPreview = true;
+                state.heartBias = "miss";
+                showToast("获得能力：红心擦肩");
+              }
+            }
+          ]
+        },
+        10: {
+          kicker: "环境异变",
+          title: "尺寸重组",
+          copy: "选择接下来更容易站稳，还是让棋子拥有更大的身体。",
+          choices: [
+            {
+              mark: "A",
+              title: "格子变大，棋子变小",
+              text: "平台扩大 1 个单位，棋子缩小。",
+              apply: () => {
+                state.sizeUnits += 1;
+                state.pieceScale = clamp(state.pieceScale - PIECE_SCALE_DELTA, 0.62, 1.55);
+                relayoutFuture(state.currentIndex + 1);
+                showToast("环境异变：大格小棋");
+              }
+            },
+            {
+              mark: "B",
+              title: "格子变小，棋子变大",
+              text: "平台缩小 1 个单位，棋子变大，并获得浮动蓄力条。",
+              apply: () => {
+                state.sizeUnits -= 1;
+                state.pieceScale = clamp(state.pieceScale + PIECE_SCALE_DELTA, 0.62, 1.55);
+                state.chargeMeterUnlocked = true;
+                showToast("环境异变：小格大棋");
+              }
+            }
+          ]
+        },
+        15: {
+          kicker: "能力宝箱",
+          title: "回春跳法",
+          copy: "选择一种能把失误边缘变成回血机会的路线。",
+          choices: [
+            {
+              mark: "A",
+              title: "越格回春",
+              text: "直接落在随后第 2 个格子上时，回复 2 点生命。",
+              apply: () => {
+                state.abilities.skipHeal = true;
+                showToast("获得能力：越格回春");
+              }
+            },
+            {
+              mark: "B",
+              title: "归位回春",
+              text: "跳跃后落回当前起跳格时，回复 1 点生命。",
+              apply: () => {
+                state.abilities.returnHeal = true;
+                showToast("获得能力：归位回春");
+              }
+            }
+          ]
+        },
+        20: {
+          kicker: "环境异变",
+          title: "危险地形",
+          copy: "选择未来会出现的特殊格类型。",
+          choices: [
+            {
+              mark: "A",
+              title: "溜冰格",
+              text: "未来会出现湿滑格子，棋子落地后会向前滑动一点。",
+              apply: () => {
+                scheduleEnvMutation("ice");
+                showToast("环境异变：溜冰格");
+              }
+            },
+            {
+              mark: "B",
+              title: "伪坡度格",
+              text: "未来会出现伪装坡度格，棋子落地后会向后滑动一点。",
+              apply: () => {
+                scheduleEnvMutation("slope");
+                showToast("环境异变：伪坡度格");
+              }
+            }
+          ]
+        },
+        25: {
+          kicker: "能力宝箱",
+          title: "后期成长",
+          copy: "选择一种把特殊落点变成成长资源的能力。",
+          choices: [
+            {
+              mark: "A",
+              title: "越格扩张",
+              text: "直接落在随后第 2 个格子上时，所有平台尺寸 +3。",
+              apply: () => {
+                state.abilities.skipGrow = true;
+                relayoutFuture(state.currentIndex + 1);
+                showToast("获得能力：越格扩张");
+              }
+            },
+            {
+              mark: "B",
+              title: "红心归位",
+              text: "跳回起跳格且完全盖住红心时，回复所有生命。",
+              apply: () => {
+                state.abilities.returnHeartFull = true;
+                state.returnHeartCoverAssist = state.abilities.heartMissPreview;
+                showToast("获得能力：红心归位");
+              }
+            }
+          ]
+        }
+      };
+
+      function getAudioContext() {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return null;
+        if (!audioState.context) {
+          audioState.context = new AudioContextClass();
+        }
+        return audioState.context;
+      }
+
+      function loadRawSfx(name) {
+        const config = sfxConfig[name];
+        if (!config) return Promise.reject(new Error(`Unknown sfx: ${name}`));
+        if (audioState.raw[name]) return Promise.resolve(audioState.raw[name]);
+        if (!audioState.loadingRaw[name]) {
+          audioState.loadingRaw[name] = fetch(config.url)
+            .then(response => {
+              if (!response.ok) throw new Error(`Failed to load ${config.url}`);
+              return response.arrayBuffer();
+            })
+            .then(buffer => {
+              audioState.raw[name] = buffer;
+              return buffer;
+            })
+            .catch(error => {
+              console.warn(error);
+              audioState.loadingRaw[name] = null;
+              return null;
+            });
+        }
+        return audioState.loadingRaw[name];
+      }
+
+      function decodeSfx(name) {
+        const context = getAudioContext();
+        if (!context) return Promise.resolve(null);
+        if (audioState.buffers[name]) return Promise.resolve(audioState.buffers[name]);
+        if (!audioState.decoding[name]) {
+          audioState.decoding[name] = loadRawSfx(name)
+            .then(raw => raw ? context.decodeAudioData(raw.slice(0)) : null)
+            .then(buffer => {
+              if (buffer) audioState.buffers[name] = buffer;
+              return buffer;
+            })
+            .catch(error => {
+              console.warn(error);
+              audioState.decoding[name] = null;
+              return null;
+            });
+        }
+        return audioState.decoding[name];
+      }
+
+      function unlockAudio() {
+        const context = getAudioContext();
+        if (context) {
+          if (context.state === "suspended") context.resume();
+          decodeSfx("jump");
+          decodeSfx("land");
+          decodeSfx("fall");
+        }
+        startMusic();
+      }
+
+      function playSfx(name, volumeScale = 1) {
+        const context = getAudioContext();
+        const config = sfxConfig[name];
+        if (!context || !config) return;
+        if (context.state === "suspended") context.resume();
+        const start = buffer => {
+          if (!buffer) return;
+          const source = context.createBufferSource();
+          const gain = context.createGain();
+          gain.gain.value = config.volume * volumeScale;
+          source.buffer = buffer;
+          source.connect(gain);
+          gain.connect(context.destination);
+          source.start();
+        };
+        const buffer = audioState.buffers[name];
+        if (buffer) {
+          start(buffer);
+        } else {
+          decodeSfx(name).then(start);
+        }
+      }
+
+      function playCheer(kind = "art") {
+        const context = getAudioContext();
+        if (!context) return;
+        if (context.state === "suspended") context.resume();
+
+        const nowMs = performance.now();
+        const minGap = kind === "choice" ? 120 : 280;
+        if (nowMs - audioState.lastCheerAt < minGap) return;
+        audioState.lastCheerAt = nowMs;
+
+        const notes = kind === "choice"
+          ? [
+            [523.25, 0, 0.11],
+            [659.25, 0.08, 0.13],
+            [880, 0.17, 0.18]
+          ]
+          : [
+            [783.99, 0, 0.09],
+            [1174.66, 0.07, 0.12]
+          ];
+        const baseVolume = kind === "choice" ? 0.052 : 0.038;
+        const startTime = context.currentTime + 0.01;
+
+        notes.forEach(([frequency, offset, duration], index) => {
+          const oscillator = context.createOscillator();
+          const gain = context.createGain();
+          const t = startTime + offset;
+          oscillator.type = index === notes.length - 1 ? "sine" : "triangle";
+          oscillator.frequency.setValueAtTime(frequency, t);
+          gain.gain.setValueAtTime(0.0001, t);
+          gain.gain.exponentialRampToValueAtTime(baseVolume * (1 - index * 0.08), t + 0.018);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+          oscillator.connect(gain);
+          gain.connect(context.destination);
+          oscillator.start(t);
+          oscillator.stop(t + duration + 0.03);
+        });
+      }
+
+      function getMusicElement() {
+        if (!audioState.music) {
+          const music = new Audio(musicConfig.url);
+          music.preload = "auto";
+          music.loop = false;
+          music.volume = 0;
+          music.addEventListener("timeupdate", () => {
+            if (music.currentTime >= musicConfig.loopEnd) {
+              music.currentTime = 0;
+            }
+          });
+          audioState.music = music;
+        }
+        return audioState.music;
+      }
+
+      function fadeMusicTo(targetVolume, duration = musicConfig.fadeMs) {
+        const music = getMusicElement();
+        const startVolume = music.volume;
+        const startTime = performance.now();
+        cancelAnimationFrame(audioState.musicFadeFrame);
+        const step = now => {
+          const progress = clamp((now - startTime) / duration, 0, 1);
+          music.volume = lerp(startVolume, targetVolume, easeOutCubic(progress));
+          if (progress < 1) {
+            audioState.musicFadeFrame = requestAnimationFrame(step);
+          }
+        };
+        audioState.musicFadeFrame = requestAnimationFrame(step);
+      }
+
+      function startMusic() {
+        const music = getMusicElement();
+        if (audioState.musicStarted && !music.paused) return;
+        audioState.musicStarted = true;
+        const started = music.play();
+        if (started?.then) {
+          started
+            .then(() => fadeMusicTo(musicConfig.volume))
+            .catch(error => {
+              console.warn(error);
+              audioState.musicStarted = false;
+            });
+        } else {
+          fadeMusicTo(musicConfig.volume);
+        }
+      }
+
+      function getViewportSize() {
+        const visual = window.visualViewport;
+        const layoutWidth = document.documentElement.clientWidth || window.innerWidth || 0;
+        return {
+          width: Math.round(Math.max(layoutWidth, window.innerWidth || 0, visual?.width || 0)),
+          height: Math.round(visual?.height || window.innerHeight || document.documentElement.clientHeight)
+        };
+      }
+
+      function resize() {
+        state.dpr = clamp(window.devicePixelRatio || 1, 1, 2.4);
+        const viewport = getViewportSize();
+        state.width = viewport.width;
+        state.height = viewport.height;
+        document.documentElement.style.setProperty("--app-width", `${state.width}px`);
+        document.documentElement.style.setProperty("--app-height", `${state.height}px`);
+        document.body.classList.toggle("compact-ui", state.height < 760);
+        state.scale = clamp(state.width / 390, 0.82, 1.12);
+        canvas.width = Math.round(state.width * state.dpr);
+        canvas.height = Math.round(state.height * state.dpr);
+        canvas.style.width = state.width + "px";
+        canvas.style.height = state.height + "px";
+        ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+      }
+
+      function resetGame(keepBest = true) {
+        const best = keepBest ? state.best : 0;
+        const bestName = keepBest ? state.bestName : DEFAULT_BEST_NAME;
+        state.platforms = [];
+        state.currentIndex = 0;
+        state.hearts = START_HEARTS;
+        state.best = best;
+        state.bestName = bestName;
+        state.runStartBest = best;
+        state.pendingRecordScore = 0;
+        state.triggered = new Set();
+        state.jump = null;
+        state.fail = null;
+        state.slide = null;
+        state.recover = null;
+        state.modal = null;
+        state.recordOpen = false;
+        state.retryOpen = false;
+        clearTimeout(state.retryTimer);
+        state.retryTimer = 0;
+        clearTimeout(state.pendingChoice?.timer);
+        state.pendingChoice = null;
+        state.sizeUnits = 0;
+        state.pieceScale = 1;
+        state.gapScale = 1;
+        state.heartActive = false;
+        state.heartBias = "normal";
+        state.returnHeartCoverAssist = false;
+        state.nextHeartIndex = Infinity;
+        state.healTexts = [];
+        state.envMutation = null;
+        state.platformSizeBonus = 0;
+        state.previewCharges = 0;
+        state.chargeMeterUnlocked = false;
+        state.abilities = {
+          heartAuto: false,
+          heartMissPreview: false,
+          skipHeal: false,
+          returnHeal: false,
+          skipGrow: false,
+          returnHeartFull: false,
+          forwardDouble: false,
+          backwardDouble: false
+        };
+        state.charge.active = false;
+        state.charge.second = false;
+        state.charge.value = 0;
+        state.charge.pointerId = null;
+        state.player.offsetX = 0;
+        state.player.offsetY = 0;
+        state.player.squash = 0;
+        state.player.tilt = 0;
+        state.player.alpha = 1;
+        createInitialPlatforms();
+        const p0 = getPlatformCenter(0, state.time);
+        state.player.x = p0.x;
+        state.player.y = p0.y;
+        state.player.z = 0;
+        state.camera.x = state.player.x;
+        state.camera.y = state.player.y;
+        state.camera.zoom = 1;
+        state.camera.shake = 0;
+        state.camera.pulse = 0;
+        state.lastSafe = safeSnapshot();
+        closeChoice();
+        closeRecordPrompt();
+        closeRetryPrompt();
+        updateHud();
+      }
+
+      function createInitialPlatforms() {
+        state.platforms.push({
+          index: 0,
+          x: 0,
+          y: 0,
+          baseSize: 100,
+          tint: 0,
+          phase: rand(0, Math.PI * 2),
+          heart: false,
+          sizeDelta: 0,
+          motion: "none",
+          special: null
+        });
+        ensurePlatforms(32);
+      }
+
+      function placeAfter(prev, index) {
+        const gap = state.gapScale;
+        let dir = Math.random() > 0.5 ? 1 : -1;
+        const prevPrev = state.platforms[prev.index - 1];
+        const previousDir = prevPrev ? Math.sign(prev.x - prevPrev.x) : 0;
+        if (
+          state.abilities.skipGrow
+          && index > state.currentIndex + 1
+          && previousDir
+          && Math.random() < SKIP_GROW_DIRECTION_MATCH_CHANCE
+        ) {
+          dir = previousDir;
+        }
+        const lateralScale = Math.sqrt(gap);
+        const tightenLargeTileRange = shouldTightenLargeTileRange(index);
+        const spreadCap = tightenLargeTileRange ? LARGE_TILE_LATE_SPREAD_CAP : 1;
+        const spread = clamp((index - 1) / 19, 0, spreadCap);
+        const range = (earlyMin, earlyMax, lateMin, lateMax) => {
+          const min = lerp(earlyMin, lateMin, spread);
+          const max = lerp(earlyMax, lateMax, spread);
+          const squeezedMax = tightenLargeTileRange ? lerp(max, min, LARGE_TILE_RANGE_SQUEEZE) : max;
+          return rand(min, squeezedMax);
+        };
+        const roll = Math.random();
+        const lateral = roll < 0.28 ? range(50, 72, 30, 78) : roll < 0.78 ? range(82, 126, 80, 150) : range(128, 168, 158, 225);
+        const forward = roll < 0.28 ? range(112, 124, 94, 122) : roll < 0.78 ? range(132, 156, 132, 174) : range(160, 186, 190, 238);
+        let dx = dir * lateral * lateralScale;
+        if (index % 5 === 0) dx *= rand(0.58, 0.86);
+        let x = clamp(prev.x + dx, -235, 235);
+        if (Math.abs(x - prev.x) < 42) {
+          x += dir * rand(46, 74);
+          x = clamp(x, -235, 235);
+        }
+        const y = prev.y - forward * gap;
+        return { x, y };
+      }
+
+      function shouldTightenLargeTileRange(index) {
+        if (index < 20) return false;
+        return state.sizeUnits > 0;
+      }
+
+      function ensurePlatforms(index) {
+        while (state.platforms.length <= index) {
+          const prev = state.platforms[state.platforms.length - 1];
+          const i = state.platforms.length;
+          const pos = placeAfter(prev, i);
+          const platform = {
+            index: i,
+            x: pos.x,
+            y: pos.y,
+            baseSize: rand(88, 106),
+            tint: Math.random(),
+            phase: rand(0, Math.PI * 2),
+            heart: false,
+            sizeDelta: 0,
+            motion: "none",
+            special: null
+          };
+          applyPlatformMutation(platform);
+          state.platforms.push(platform);
+        }
+        assignHeartsUntil(index);
+        assignSpecialTilesUntil(index);
+      }
+
+      function relayoutFuture(fromIndex) {
+        ensurePlatforms(fromIndex + 20);
+        for (let i = fromIndex; i < state.platforms.length; i += 1) {
+          const prev = state.platforms[i - 1];
+          const pos = placeAfter(prev, i);
+          state.platforms[i].x = pos.x;
+          state.platforms[i].y = pos.y;
+          state.platforms[i].phase = rand(0, Math.PI * 2);
+          applyPlatformMutation(state.platforms[i]);
+        }
+      }
+
+      function scheduleEnvMutation(type) {
+        state.envMutation = {
+          type,
+          startIndex: state.currentIndex + 1,
+          nextIndex: state.currentIndex + 1
+        };
+        for (const platform of state.platforms) {
+          if (platform.index >= state.envMutation.startIndex) platform.special = null;
+        }
+        ensurePlatforms(state.currentIndex + 24);
+        assignSpecialTilesUntil(state.currentIndex + 24);
+        state.camera.pulse = 1;
+      }
+
+      function applyPlatformMutation(platform) {
+        platform.sizeDelta = 0;
+        platform.motion = "none";
+      }
+
+      function activateHearts() {
+        if (!state.heartActive) {
+          state.heartActive = true;
+          state.nextHeartIndex = Math.max(5, state.currentIndex + 1);
+        }
+        ensurePlatforms(state.currentIndex + 24);
+        state.camera.pulse = 1;
+      }
+
+      function assignHeartsUntil(index) {
+        if (!state.heartActive) return;
+        while (state.nextHeartIndex <= index && state.nextHeartIndex < state.platforms.length) {
+          if (!triggerSteps.has(state.nextHeartIndex + 1)) {
+            state.platforms[state.nextHeartIndex].heart = true;
+          }
+          state.nextHeartIndex += randInt(1, 3);
+        }
+      }
+
+      function assignSpecialTilesUntil(index) {
+        const mutation = state.envMutation;
+        if (!mutation) return;
+        while (mutation.nextIndex <= index && mutation.nextIndex < state.platforms.length) {
+          state.platforms[mutation.nextIndex].special = mutation.type;
+          mutation.nextIndex += randInt(1, 3);
+        }
+      }
+
+      function platformSize(index) {
+        const platform = state.platforms[index];
+        return clamp((platform?.baseSize || 96) + state.platformSizeBonus + (state.sizeUnits + (platform?.sizeDelta || 0)) * PLATFORM_SIZE_UNIT, 54, 148);
+      }
+
+      function playerRadius() {
+        return clamp(18 * state.pieceScale, 10.5, 28);
+      }
+
+      function heartSizeScale() {
+        if (state.heartBias === "auto") return HEART_AUTO_SIZE_SCALE;
+        if (state.heartBias === "miss") return HEART_MISS_SIZE_SCALE;
+        return 1;
+      }
+
+      function heartMarkerRadius(index) {
+        return clamp(platformSize(index) * 0.06, 5, 9) * heartSizeScale();
+      }
+
+      function getPlatformCenter(index, atTime = state.time) {
+        ensurePlatforms(index);
+        const p = state.platforms[index];
+        let x = p.x;
+        let y = p.y;
+        if (p.motion === "side") {
+          x += Math.sin(atTime * 0.00105 + p.phase) * 42;
+        } else if (p.motion === "forward") {
+          const prev = state.platforms[Math.max(0, index - 1)] || p;
+          const next = state.platforms[index + 1] || p;
+          const vx = next.x - prev.x;
+          const vy = next.y - prev.y;
+          const len = Math.hypot(vx, vy) || 1;
+          const drift = Math.sin(atTime * 0.001 + p.phase) * 38;
+          x += vx / len * drift;
+          y += vy / len * drift;
+        }
+        return { x, y };
+      }
+
+      function syncPlayerToPlatform() {
+        if (state.jump) return;
+        const center = getPlatformCenter(state.currentIndex, state.time);
+        state.player.x = center.x + state.player.offsetX;
+        state.player.y = center.y + state.player.offsetY;
+        state.player.z = 0;
+      }
+
+      function worldToScreen(x, y, z = 0) {
+        const zoom = state.camera.zoom;
+        const scale = state.scale * zoom;
+        const shakeX = state.camera.shake ? Math.sin(state.time * 0.06) * state.camera.shake : 0;
+        const shakeY = state.camera.shake ? Math.cos(state.time * 0.07) * state.camera.shake : 0;
+        return {
+          x: (x - state.camera.x) * scale + state.width * 0.5 + shakeX,
+          y: (y - state.camera.y) * scale + state.height * 0.68 - z * scale + shakeY
+        };
+      }
+
+      function startCharge(now, pointerId, isSecond = false) {
+        if (state.guideOpen || state.modal || state.pendingChoice || state.fail || state.slide || state.recover) return;
+        if (!isSecond && state.jump) return;
+        state.charge.active = true;
+        state.charge.second = isSecond;
+        state.charge.start = now;
+        state.charge.value = 0;
+        state.charge.pointerId = pointerId;
+        state.charge.usePreview = !isSecond && state.previewCharges > 0;
+        pulsePlayer(0.08);
+      }
+
+      function releaseCharge(now) {
+        if (!state.charge.active) return;
+        const charge = chargeValue(now);
+        if (state.charge.second) {
+          applySecondJump(charge);
+        } else {
+          startManualJump(charge);
+          if (state.charge.usePreview && state.previewCharges > 0) {
+            state.previewCharges -= 1;
+          }
+        }
+        state.charge.active = false;
+        state.charge.second = false;
+        state.charge.pointerId = null;
+        state.charge.value = 0;
+        state.charge.usePreview = false;
+      }
+
+      function chargeValue(now = state.time) {
+        const raw = clamp((now - state.charge.start) / CHARGE_DURATION, 0, 1);
+        const bounce = raw >= 1 ? 1 - Math.sin(now * 0.013) * 0.03 : raw;
+        return clamp(bounce, 0, 1);
+      }
+
+      function jumpDirection() {
+        ensurePlatforms(state.currentIndex + 2);
+        const from = { x: state.player.x, y: state.player.y };
+        const to = getPlatformCenter(state.currentIndex + 1, state.time);
+        const vx = to.x - from.x;
+        const vy = to.y - from.y;
+        const len = Math.hypot(vx, vy) || 1;
+        return { x: vx / len, y: vy / len, distance: len };
+      }
+
+      function predictedLanding(charge) {
+        const dir = jumpDirection();
+        const minDistance = 28;
+        const maxDistance = clamp(dir.distance * MAX_JUMP_DISTANCE_SCALE, 190, 560);
+        const power = jumpPowerCurve(charge);
+        const baseDistance = lerp(minDistance, maxDistance, power);
+        const fullChargeMax = clamp(dir.distance * FULL_CHARGE_DISTANCE_SCALE, maxDistance, FULL_CHARGE_DISTANCE_CAP);
+        const extensionRaw = clamp((charge - FULL_CHARGE_EXTENSION_START) / (1 - FULL_CHARGE_EXTENSION_START), 0, 1);
+        const extension = jumpPowerCurve(extensionRaw);
+        const distance = baseDistance + (fullChargeMax - maxDistance) * extension;
+        return {
+          x: state.player.x + dir.x * distance,
+          y: state.player.y + dir.y * distance,
+          dir,
+          distance
+        };
+      }
+
+      function startManualJump(charge) {
+        if (state.jump || state.modal) return;
+        syncPlayerToPlatform();
+        const target = predictedLanding(charge);
+        const start = { x: state.player.x, y: state.player.y };
+        state.lastSafe = safeSnapshot();
+        state.jump = {
+          kind: "manual",
+          startIndex: state.currentIndex,
+          from: start,
+          to: { x: target.x, y: target.y },
+          startTime: state.time,
+          duration: 780,
+          height: clamp(78 + target.distance * 0.22, 94, 165),
+          dir: target.dir,
+          secondUsed: false,
+          secondWindow: true
+        };
+        state.player.squash = 0.24;
+        playSfx("jump");
+        haptic(8);
+      }
+
+      function canUseSecondJump() {
+        if (state.fail || state.slide || state.recover) return false;
+        if (!state.jump || state.jump.kind !== "manual") return false;
+        if (state.jump.secondUsed || state.charge.active) return false;
+        if (!state.abilities.forwardDouble && !state.abilities.backwardDouble) return false;
+        const progress = clamp((state.time - state.jump.startTime) / state.jump.duration, 0, 1);
+        return progress > 0.18 && progress < 0.88;
+      }
+
+      function applySecondJump(charge) {
+        if (!state.jump || state.jump.secondUsed) return;
+        const sign = state.abilities.backwardDouble ? -1 : 1;
+        const extra = lerp(16, 145, jumpPowerCurve(charge)) * sign;
+        state.jump.to.x += state.jump.dir.x * extra;
+        state.jump.to.y += state.jump.dir.y * extra;
+        state.jump.height += Math.abs(extra) * 0.12;
+        state.jump.duration += 90;
+        state.jump.secondUsed = true;
+        showToast(state.abilities.backwardDouble ? "二段回拉" : "二段前跳");
+        playSfx("jump", 0.68);
+        haptic(14);
+      }
+
+      function startAutoJump(targetIndex) {
+        ensurePlatforms(targetIndex + 6);
+        syncPlayerToPlatform();
+        const targetSize = platformSize(targetIndex);
+        const radius = playerRadius();
+        const margin = Math.max(8, targetSize * 0.28 - radius * 0.55);
+        const offset = {
+          x: rand(-margin, margin),
+          y: rand(-margin * 0.55, margin * 0.55)
+        };
+        state.lastSafe = safeSnapshot();
+        state.jump = {
+          kind: "auto",
+          startIndex: state.currentIndex,
+          targetIndex,
+          targetOffset: offset,
+          from: { x: state.player.x, y: state.player.y },
+          startTime: state.time,
+          duration: 620,
+          height: 112,
+          secondUsed: true
+        };
+        playSfx("jump", 0.74);
+        haptic(10);
+      }
+
+      function safeSnapshot() {
+        return {
+          index: state.currentIndex,
+          offsetX: state.player.offsetX,
+          offsetY: state.player.offsetY
+        };
+      }
+
+      function restoreSafe() {
+        const safe = state.lastSafe || { index: 0, offsetX: 0, offsetY: 0 };
+        state.currentIndex = safe.index;
+        state.player.offsetX = safe.offsetX;
+        state.player.offsetY = safe.offsetY;
+        syncPlayerToPlatform();
+      }
+
+      function settlePlayerOnPlatform(index) {
+        const center = getPlatformCenter(index, state.time);
+        state.currentIndex = index;
+        state.player.offsetX = clamp(state.player.x - center.x, -platformSize(index) * 0.36, platformSize(index) * 0.36);
+        state.player.offsetY = clamp(state.player.y - center.y, -platformSize(index) * 0.24, platformSize(index) * 0.24);
+      }
+
+      function completeStableLanding(index, startIndex, detail) {
+        const movedForward = index > startIndex;
+        const landedOnStart = index === startIndex;
+        if (landedOnStart && state.abilities.returnHeal) {
+          heal("归位回春", index);
+        }
+        if (landedOnStart && canTriggerReturnHeartFull(index)) {
+          heal("红心归位", index, MAX_HEARTS, {
+            text: "回满生命",
+            tone: "pink",
+            showOnTrigger: true
+          });
+        }
+        if (movedForward && state.abilities.skipHeal && index === startIndex + 2) {
+          heal("越格回春", index, 2);
+        }
+        if (movedForward && state.abilities.skipGrow && index === startIndex + 2) {
+          growAllPlatforms(index);
+        }
+        onSuccessfulLanding(index, startIndex, detail);
+      }
+
+      function finishJump() {
+        const jump = state.jump;
+        state.jump = null;
+        state.player.z = 0;
+        state.player.squash = 0.26;
+
+        if (jump.kind === "auto") {
+          const target = getPlatformCenter(jump.targetIndex, state.time);
+          state.player.offsetX = jump.targetOffset.x;
+          state.player.offsetY = jump.targetOffset.y;
+          state.player.x = target.x + jump.targetOffset.x;
+          state.player.y = target.y + jump.targetOffset.y;
+          state.currentIndex = jump.targetIndex;
+          playSfx("land");
+          if (!tryStartLandingSlide(jump.targetIndex, jump.startIndex, { auto: true })) {
+            completeStableLanding(jump.targetIndex, jump.startIndex, { auto: true });
+          }
+          return;
+        }
+
+        const landedIndex = findLanding(jump.startIndex);
+        const movedForward = landedIndex > jump.startIndex;
+        const landedOnStart = landedIndex === jump.startIndex;
+        const fullHealReturn = landedOnStart && canTriggerReturnHeartFull(landedIndex);
+        if (movedForward || (landedOnStart && state.abilities.returnHeal) || fullHealReturn) {
+          settlePlayerOnPlatform(landedIndex);
+          playSfx("land");
+          if (!tryStartLandingSlide(landedIndex, jump.startIndex, { auto: false })) {
+            completeStableLanding(landedIndex, jump.startIndex, { auto: false });
+          }
+        } else if (landedOnStart) {
+          playSfx("land", 0.82);
+          failJump("跳近了");
+        } else {
+          startFailAnimation(jump);
+        }
+      }
+
+      function canTriggerReturnHeartFull(index) {
+        const platform = state.platforms[index];
+        return Boolean(
+          state.abilities.returnHeartFull
+          && platform?.heart
+          && heartRelation(index) === "cover"
+        );
+      }
+
+      function growAllPlatforms(targetIndex = state.currentIndex) {
+        state.platformSizeBonus += SKIP_GROWTH_BONUS;
+        state.camera.pulse = Math.max(state.camera.pulse, 0.85);
+        triggerArtText(targetIndex, "平台扩大", "blue");
+        haptic([10, 18]);
+      }
+
+      function tryStartLandingSlide(index, startIndex, detail) {
+        const special = state.platforms[index]?.special;
+        if (!special || state.slide) return false;
+        const route = getRouteDirection(startIndex, index);
+        const direction = special === "ice" ? route : { x: -route.x, y: -route.y };
+        const distance = platformSize(index) * (special === "ice" ? 0.29 : 0.25);
+        const from = { x: state.player.x, y: state.player.y, z: 0 };
+        state.slide = {
+          index,
+          startIndex,
+          detail,
+          special,
+          direction,
+          from,
+          to: {
+            x: from.x + direction.x * distance,
+            y: from.y + direction.y * distance,
+            z: 0
+          },
+          startTime: state.time,
+          duration: special === "ice" ? 520 : 480
+        };
+        state.player.squash = Math.max(state.player.squash, 0.12);
+        haptic(special === "ice" ? 8 : 10);
+        return true;
+      }
+
+      function getRouteDirection(startIndex, index) {
+        const from = getPlatformCenter(startIndex, state.time);
+        const to = getPlatformCenter(index === startIndex ? index + 1 : index, state.time);
+        const vx = to.x - from.x;
+        const vy = to.y - from.y;
+        const len = Math.hypot(vx, vy) || 1;
+        return { x: vx / len, y: vy / len };
+      }
+
+      function isStableOnPlatform(index, x = state.player.x, y = state.player.y) {
+        const center = getPlatformCenter(index, state.time);
+        const size = platformSize(index);
+        const radius = playerRadius();
+        const stableX = Math.max(6, size * 0.48 - radius * 0.18);
+        const stableY = Math.max(5, size * 0.34 - radius * 0.12);
+        return Math.abs(x - center.x) <= stableX && Math.abs(y - center.y) <= stableY;
+      }
+
+      function findLanding(startIndex) {
+        ensurePlatforms(startIndex + 2);
+        let landed = -1;
+        for (let i = startIndex; i <= startIndex + 2; i += 1) {
+          if (isStableOnPlatform(i)) landed = i;
+        }
+        return landed;
+      }
+
+      function getFailureProbe(startIndex) {
+        ensurePlatforms(startIndex + 2);
+        let best = null;
+        for (let i = startIndex + 1; i <= startIndex + 2; i += 1) {
+          const center = getPlatformCenter(i, state.time);
+          const size = platformSize(i);
+          const radius = playerRadius();
+          const dx = Math.abs(state.player.x - center.x);
+          const dy = Math.abs(state.player.y - center.y);
+          const stableX = size * 0.48 - radius * 0.18;
+          const stableY = size * 0.34 - radius * 0.12;
+          const touchX = size * 0.62 + radius * 0.42;
+          const touchY = size * 0.31 + radius * 0.32;
+          const stable = dx <= stableX && dy <= stableY;
+          const touchScore = dx / touchX + dy / touchY;
+          const candidate = { index: i, center, touchScore, stable };
+          if (!best || candidate.touchScore < best.touchScore) best = candidate;
+        }
+        return best;
+      }
+
+      function getFailFallDirection(startIndex) {
+        ensurePlatforms(startIndex + 1);
+        const startCenter = getPlatformCenter(startIndex, state.time);
+        const targetCenter = getPlatformCenter(startIndex + 1, state.time);
+        const targetDeltaX = targetCenter.x - startCenter.x;
+        const similarX = Math.abs(targetDeltaX) < 24;
+        if (similarX) return { x: 1, y: 0 };
+
+        const landingLeftOfTarget = state.player.x < targetCenter.x;
+        const landingRightOfTarget = state.player.x > targetCenter.x;
+        if (targetDeltaX > 0) {
+          return { x: landingLeftOfTarget ? -1 : 1, y: 0 };
+        }
+        return { x: landingRightOfTarget ? 1 : -1, y: 0 };
+      }
+
+      function getFailDistanceText(jump) {
+        ensurePlatforms(jump.startIndex + 1);
+        const targetCenter = getPlatformCenter(jump.startIndex + 1, state.time);
+        const vx = targetCenter.x - jump.from.x;
+        const vy = targetCenter.y - jump.from.y;
+        const len = Math.hypot(vx, vy) || 1;
+        const landingDelta =
+          (state.player.x - targetCenter.x) * (vx / len)
+          + (state.player.y - targetCenter.y) * (vy / len);
+        return landingDelta > 0 ? "跳远了" : "跳近了";
+      }
+
+      function startFailAnimation(jump) {
+        const probe = getFailureProbe(jump.startIndex);
+        const isEdgeMiss = probe && !probe.stable && probe.touchScore <= 1.16;
+        const fallDir = getFailFallDirection(jump.startIndex);
+        const side = fallDir.x >= 0 ? 1 : -1;
+        const from = { x: state.player.x, y: state.player.y, z: state.player.z };
+        const type = isEdgeMiss ? "edge" : "drop";
+        state.fail = {
+          type,
+          from,
+          to: type === "edge"
+            ? {
+              x: from.x + fallDir.x * 86,
+              y: from.y,
+              z: -230
+            }
+            : {
+              x: from.x + fallDir.x * 44,
+              y: from.y,
+              z: -460
+            },
+          startTime: state.time,
+          duration: type === "edge" ? 1280 : 840,
+          fallStart: type === "edge" ? 0.34 : 0.12,
+          soundAt: type === "edge" ? 0.28 : 0.10,
+          soundVolume: type === "edge" ? 0.82 : 1,
+          soundPlayed: false,
+          message: getFailDistanceText(jump),
+          tiltSide: side
+        };
+        state.player.offsetX = 0;
+        state.player.offsetY = 0;
+        state.player.squash = type === "edge" ? 0.3 : 0;
+        state.camera.shake = type === "edge" ? 4 : 2;
+        haptic(type === "edge" ? [18, 32, 18] : 20);
+      }
+
+      function updateFailAnimation() {
+        if (!state.fail) return;
+        const fail = state.fail;
+        const progress = clamp((state.time - fail.startTime) / fail.duration, 0, 1);
+        if (!fail.soundPlayed && progress >= fail.soundAt) {
+          playSfx("fall", fail.soundVolume);
+          fail.soundPlayed = true;
+        }
+        if (fail.type === "edge") {
+          const slipStart = fail.fallStart ?? 0.22;
+          const slip = progress <= slipStart ? 0 : (progress - slipStart) / (1 - slipStart);
+          const eased = easeInOut(slip);
+          state.player.x = lerp(fail.from.x, fail.to.x, eased);
+          state.player.y = lerp(fail.from.y, fail.to.y, eased);
+          state.player.z = slip < 0.04 ? 0 : -Math.pow(slip, 1.65) * Math.abs(fail.to.z);
+          state.player.tilt = fail.tiltSide * (0.18 + eased * 1.08);
+          state.player.alpha = 1;
+          state.player.squash = progress < slipStart ? 0.28 * (1 - progress / slipStart) : 0;
+        } else {
+          const fallStart = fail.fallStart ?? 0;
+          const fall = progress <= fallStart ? 0 : (progress - fallStart) / (1 - fallStart);
+          const eased = fall * fall;
+          state.player.x = lerp(fail.from.x, fail.to.x, fall);
+          state.player.y = lerp(fail.from.y, fail.to.y, fall);
+          state.player.z = -Math.pow(fall, 1.9) * Math.abs(fail.to.z);
+          state.player.tilt = fail.tiltSide * fall * Math.PI * 1.35;
+          state.player.alpha = clamp(1 - Math.pow(fall, 2.2) * 0.72, 0.18, 1);
+        }
+        if (progress >= 1) {
+          state.fail = null;
+          state.player.tilt = 0;
+          state.player.alpha = 1;
+          failJump(fail.message);
+        }
+      }
+
+      function updateSlideAnimation() {
+        if (!state.slide) return;
+        const slide = state.slide;
+        const progress = clamp((state.time - slide.startTime) / slide.duration, 0, 1);
+        const eased = easeOutCubic(progress);
+        state.player.x = lerp(slide.from.x, slide.to.x, eased);
+        state.player.y = lerp(slide.from.y, slide.to.y, eased);
+        state.player.z = 0;
+        state.player.alpha = 1;
+        state.player.tilt = (slide.direction.x || 1) * Math.sin(progress * Math.PI) * (slide.special === "ice" ? 0.07 : -0.055);
+        state.player.squash = progress < 0.25 ? 0.12 * (1 - progress / 0.25) : 0;
+
+        if (progress < 1) return;
+
+        const center = getPlatformCenter(slide.index, state.time);
+        state.player.offsetX = state.player.x - center.x;
+        state.player.offsetY = state.player.y - center.y;
+        state.player.tilt = 0;
+        state.slide = null;
+
+        if (isStableOnPlatform(slide.index)) {
+          settlePlayerOnPlatform(slide.index);
+          completeStableLanding(slide.index, slide.startIndex, slide.detail);
+        } else {
+          startSlideOutFail(slide);
+        }
+      }
+
+      function startSlideOutFail(slide) {
+        const side = slide.direction.x >= 0 ? 1 : -1;
+        const from = { x: state.player.x, y: state.player.y, z: 0 };
+        state.fail = {
+          type: "edge",
+          from,
+          to: {
+            x: from.x + slide.direction.x * 78,
+            y: from.y + slide.direction.y * 78,
+            z: -230
+          },
+          startTime: state.time,
+          duration: 1140,
+          fallStart: 0.28,
+          soundAt: 0.22,
+          soundVolume: 0.86,
+          soundPlayed: false,
+          message: "滑出去了",
+          tiltSide: side
+        };
+        state.player.offsetX = 0;
+        state.player.offsetY = 0;
+        state.player.squash = 0.22;
+        state.camera.shake = 4;
+        haptic([16, 28, 16]);
+      }
+
+      function safeWorldPosition() {
+        const safe = state.lastSafe || { index: 0, offsetX: 0, offsetY: 0 };
+        const center = getPlatformCenter(safe.index, state.time);
+        return {
+          index: safe.index,
+          x: center.x + safe.offsetX,
+          y: center.y + safe.offsetY,
+          z: 0,
+          offsetX: safe.offsetX,
+          offsetY: safe.offsetY
+        };
+      }
+
+      function startRecover(message) {
+        const target = safeWorldPosition();
+        state.currentIndex = target.index;
+        state.recover = {
+          from: {
+            x: state.player.x,
+            y: state.player.y,
+            z: state.player.z,
+            alpha: state.player.alpha
+          },
+          target,
+          startTime: state.time,
+          duration: 900,
+          travelPortion: 0.78
+        };
+        state.player.offsetX = target.offsetX;
+        state.player.offsetY = target.offsetY;
+        state.player.tilt = 0;
+        showToast(message);
+      }
+
+      function updateRecoverAnimation() {
+        if (!state.recover) return;
+        const recover = state.recover;
+        const progress = clamp((state.time - recover.startTime) / recover.duration, 0, 1);
+        const travelProgress = clamp(progress / recover.travelPortion, 0, 1);
+        const travelEased = easeOutCubic(travelProgress);
+        state.player.x = lerp(recover.from.x, recover.target.x, travelEased);
+        state.player.y = lerp(recover.from.y, recover.target.y, travelEased);
+        state.player.z = lerp(recover.from.z, recover.target.z, travelEased);
+        state.player.alpha = lerp(Math.max(0.28, recover.from.alpha), 1, travelEased);
+        if (progress < recover.travelPortion) {
+          state.player.squash = travelProgress > 0.72 ? (travelProgress - 0.72) / 0.28 * 0.16 : 0;
+        } else {
+          const bounce = clamp((progress - recover.travelPortion) / (1 - recover.travelPortion), 0, 1);
+          state.player.x = recover.target.x;
+          state.player.y = recover.target.y;
+          state.player.z = 0;
+          state.player.squash = Math.sin(bounce * Math.PI) * 0.24 * (1 - bounce * 0.35);
+        }
+        if (progress >= 1) {
+          state.recover = null;
+          state.player.alpha = 1;
+          state.player.tilt = 0;
+          restoreSafe();
+          state.player.squash = 0.16;
+        }
+      }
+
+      function failJump(message = "跳近了") {
+        state.camera.shake = 9;
+        haptic([24, 40, 24]);
+        if (state.infiniteLives) {
+          state.hearts = MAX_HEARTS;
+          startRecover(message);
+          updateHud();
+          return;
+        }
+        state.hearts -= 1;
+        if (state.hearts <= 0) {
+          const hasNewRecord = state.best > state.runStartBest;
+          setTimeout(() => {
+            if (hasNewRecord) {
+              showToast("新纪录！");
+              openRecordPrompt(state.best);
+            } else {
+              openRetryPrompt();
+            }
+          }, 520);
+        } else {
+          startRecover(message);
+        }
+        updateHud();
+      }
+
+      function heal(reason, targetIndex = state.currentIndex, amount = 1, art = null) {
+        const before = state.hearts;
+        state.hearts = clamp(state.hearts + amount, 0, MAX_HEARTS);
+        const changed = state.hearts > before;
+        if (changed || art?.showOnTrigger) {
+          if (art) {
+            triggerArtText(targetIndex, art.text, art.tone || "pink", art.duration || 1250);
+          } else {
+            triggerHealText(targetIndex);
+          }
+          haptic(amount > 1 ? [12, 24] : 12);
+        }
+      }
+
+      function triggerHealText(targetIndex, duration = 1250) {
+        triggerArtText(targetIndex, "回血！", "pink", duration);
+      }
+
+      function triggerArtText(targetIndex, text, tone = "pink", duration = 1250) {
+        playCheer("art");
+        ensurePlatforms(targetIndex);
+        const target = getPlatformCenter(targetIndex, state.time);
+        const targetScreen = worldToScreen(target.x, target.y);
+        const side = targetScreen.x > state.width * 0.55 ? "left" : "right";
+        const x = side === "right" ? state.width * 0.73 : state.width * 0.27;
+        const activeSameSide = state.healTexts.filter(item => {
+          const progress = (state.time - item.startTime) / item.duration;
+          return item.side === side && progress < 0.82;
+        }).length;
+        const laneOrder = [0, 1, -1, 2, -2];
+        const lane = laneOrder[activeSameSide % laneOrder.length];
+        const lineGap = clamp(44 * state.scale, 36, 54);
+        const y = clamp(state.height * 0.47 + lane * lineGap, 118, state.height - 150);
+        state.healTexts.push({
+          text,
+          tone,
+          side,
+          x: clamp(x, 84, state.width - 84),
+          y,
+          startTime: state.time,
+          duration
+        });
+      }
+
+      function onSuccessfulLanding(index, startIndex, detail) {
+        ensurePlatforms(index + 12);
+        const score = index + 1;
+        if (!state.infiniteLives && score > state.best) {
+          const firstBreakThisRun = score > state.runStartBest && !state.pendingRecordScore;
+          state.best = score;
+          state.pendingRecordScore = score;
+          localStorage.setItem(STORE_KEY, String(state.best));
+          localStorage.setItem(BEST_NAME_KEY, DEFAULT_BEST_NAME);
+          if (firstBreakThisRun) {
+            triggerArtText(index, "打破记录", "gold", 1500);
+          }
+        }
+        updateHud();
+
+        const step = index + 1;
+        if (triggerSteps.has(step) && !state.triggered.has(step)) {
+          state.triggered.add(step);
+          if (step === 5) activateHearts();
+          queueChoice(step);
+          return;
+        }
+
+        if (!detail.auto) {
+          processHeartLanding(index);
+        } else {
+          setTimeout(() => processHeartLanding(index), 60);
+        }
+      }
+
+      function processHeartLanding(index) {
+        const platform = state.platforms[index];
+        if (!platform || !platform.heart || state.modal || state.jump) return;
+        const relation = heartRelation(index);
+        if (state.abilities.heartAuto && relation === "cover") {
+          triggerArtText(index, "正中红心", "pink");
+          startAutoJump(index + 1);
+        } else if (state.abilities.heartMissPreview && relation === "miss") {
+          state.previewCharges += 1;
+          triggerArtText(index, "落点预测", "blue");
+          updateHud();
+        }
+      }
+
+      function heartRelation(index) {
+        const center = getPlatformCenter(index, state.time);
+        const radius = playerRadius() * 0.92;
+        const heartRadius = heartMarkerRadius(index);
+        const dist = Math.hypot(state.player.x - center.x, state.player.y - center.y);
+        const coverBonus =
+          (state.heartBias === "auto" ? heartRadius * 0.42 : 0)
+          + (state.returnHeartCoverAssist ? heartRadius * RETURN_HEART_COVER_ASSIST : 0);
+        const missBonus = state.heartBias === "miss" ? heartRadius * 0.46 : 0;
+        if (dist + heartRadius <= radius + coverBonus) return "cover";
+        if (dist > radius + heartRadius - missBonus) return "miss";
+        return "touch";
+      }
+
+      function openChoice(step) {
+        const data = choicesByStep[step];
+        if (!data) return;
+        state.pendingChoice = null;
+        state.modal = step;
+        state.charge.active = false;
+        els.choiceKicker.textContent = data.kicker;
+        els.choiceTitle.textContent = data.title;
+        els.choiceCopy.textContent = data.copy;
+        els.choices.innerHTML = "";
+        data.choices.forEach((choice, index) => {
+          const button = document.createElement("button");
+          button.className = "choice";
+          button.type = "button";
+          button.dataset.choice = String(index);
+          button.innerHTML = `
+            <span class="choice-mark">${choice.mark}</span>
+            <span>
+              <span class="choice-title">${choice.title}</span>
+              <span class="choice-text">${choice.text}</span>
+            </span>
+          `;
+          els.choices.appendChild(button);
+        });
+        els.choiceLayer.classList.add("show");
+        haptic(10);
+      }
+
+      function closeChoice() {
+        state.modal = null;
+        els.choiceLayer.classList.remove("show");
+      }
+
+      function queueChoice(step) {
+        clearTimeout(state.pendingChoice?.timer);
+        state.pendingChoice = {
+          step,
+          timer: setTimeout(() => {
+            if (!state.jump && !state.fail && !state.slide && !state.recover) {
+              openChoice(step);
+            } else {
+              queueChoice(step);
+            }
+          }, CHOICE_DELAY)
+        };
+      }
+
+      function chooseOption(index) {
+        const data = choicesByStep[state.modal];
+        const choice = data?.choices[index];
+        if (!choice) return;
+        choice.apply();
+        playCheer("choice");
+        closeChoice();
+        ensurePlatforms(state.currentIndex + 16);
+        updateHud();
+      }
+
+      function openRecordPrompt(score) {
+        state.recordOpen = true;
+        state.charge.active = false;
+        state.charge.pointerId = null;
+        els.recordScore.textContent = String(score);
+        els.recordNameInput.value = "";
+        els.recordLayer.classList.add("show");
+        els.recordLayer.setAttribute("aria-hidden", "false");
+        updateGuideButton();
+        setTimeout(() => {
+          els.recordNameInput.focus({ preventScroll: true });
+        }, 80);
+      }
+
+      function closeRecordPrompt() {
+        state.recordOpen = false;
+        els.recordLayer.classList.remove("show");
+        els.recordLayer.setAttribute("aria-hidden", "true");
+      }
+
+      function finishRecordPrompt(name) {
+        const finalName = sanitizeRecordName(name) || DEFAULT_BEST_NAME;
+        state.bestName = finalName;
+        state.pendingRecordScore = 0;
+        localStorage.setItem(BEST_NAME_KEY, finalName);
+        closeRecordPrompt();
+        openRetryPrompt();
+      }
+
+      function openRetryPrompt() {
+        state.retryOpen = true;
+        state.charge.active = false;
+        state.charge.pointerId = null;
+        els.retryLayer.classList.add("show");
+        els.retryLayer.setAttribute("aria-hidden", "false");
+        updateHud();
+        clearTimeout(state.retryTimer);
+        state.retryTimer = setTimeout(() => {
+          resetGame(true);
+        }, RETRY_PROMPT_DURATION);
+      }
+
+      function closeRetryPrompt() {
+        state.retryOpen = false;
+        clearTimeout(state.retryTimer);
+        state.retryTimer = 0;
+        els.retryLayer.classList.remove("show");
+        els.retryLayer.setAttribute("aria-hidden", "true");
+      }
+
+      function showToast(message) {
+        els.toast.textContent = message;
+        els.toast.classList.add("show");
+        clearTimeout(state.toastTimer);
+        state.toastTimer = setTimeout(() => {
+          els.toast.classList.remove("show");
+        }, 1450);
+      }
+
+      function haptic(pattern) {
+        if (navigator.vibrate) navigator.vibrate(pattern);
+      }
+
+      function pulsePlayer(amount) {
+        state.player.squash = Math.max(state.player.squash, amount);
+      }
+
+      function updateHud() {
+        els.hearts.textContent = state.infiniteLives
+          ? "∞ ♥"
+          : Array.from({ length: MAX_HEARTS }, (_, i) => i < state.hearts ? "♥" : "♡").join(" ");
+        els.score.textContent = String(state.currentIndex + 1);
+        els.bestName.textContent = state.pendingRecordScore > state.runStartBest ? "本轮" : state.bestName;
+        els.bestScore.textContent = String(state.best);
+        updateAbilityBar();
+        updateGuideButton();
+        updateChargeMeter();
+      }
+
+      function updateGuideButton() {
+        const show =
+          !state.guideOpen
+          && state.currentIndex === 0
+          && !state.jump
+          && !state.fail
+          && !state.slide
+          && !state.recover
+          && !state.modal
+          && !state.recordOpen
+          && !state.retryOpen
+          && !state.pendingChoice
+          && !state.charge.active;
+        els.guideButton.hidden = !show;
+      }
+
+      function openGuide() {
+        state.guideOpen = true;
+        state.charge.active = false;
+        els.guideButton.hidden = true;
+        els.guideLayer.classList.add("show");
+        els.guideLayer.setAttribute("aria-hidden", "false");
+      }
+
+      function closeGuide() {
+        state.guideOpen = false;
+        els.guideLayer.classList.remove("show");
+        els.guideLayer.setAttribute("aria-hidden", "true");
+        updateGuideButton();
+      }
+
+      function updateChargeMeter() {
+        const show =
+          state.chargeMeterUnlocked
+          && state.charge.active
+          && !state.charge.second
+          && !state.modal
+          && !state.guideOpen
+          && !state.recordOpen
+          && !state.retryOpen
+          && !state.pendingChoice;
+        if (!show) {
+          els.chargeMeter.classList.remove("show");
+          els.chargeMeter.setAttribute("aria-hidden", "true");
+          els.chargeMeter.hidden = true;
+          els.chargeFill.style.width = "0%";
+          els.chargeState.textContent = "待命";
+          return;
+        }
+
+        const wasHidden = els.chargeMeter.hidden;
+        els.chargeMeter.hidden = false;
+        els.chargeMeter.setAttribute("aria-hidden", "false");
+        if (wasHidden) {
+          requestAnimationFrame(() => els.chargeMeter.classList.add("show"));
+        } else {
+          els.chargeMeter.classList.add("show");
+        }
+        const pct = clamp(state.charge.value, 0, 1);
+        els.chargeFill.style.width = `${Math.round(pct * 100)}%`;
+        els.chargeState.textContent = pct > 0.98 ? "满蓄" : "松手";
+      }
+
+      function updateAbilityBar() {
+        const tags = [];
+        if (state.abilities.heartAuto) tags.push(["◆", "红心跳"]);
+        if (state.abilities.heartMissPreview || state.previewCharges > 0) {
+          tags.push(["⌁", state.previewCharges > 0 ? `预览×${state.previewCharges}` : "预览"]);
+        }
+        if (state.abilities.skipHeal) tags.push(["⇥", "越格回"]);
+        if (state.abilities.returnHeal) tags.push(["↺", "归位回"]);
+        if (state.abilities.skipGrow) tags.push(["▣", state.platformSizeBonus > 0 ? `平台+${state.platformSizeBonus}` : "越格扩"]);
+        if (state.abilities.returnHeartFull) tags.push(["♥", "红心满"]);
+        if (state.abilities.forwardDouble) tags.push(["⇥", "前二段"]);
+        if (state.abilities.backwardDouble) tags.push(["⇤", "后二段"]);
+        if (state.envMutation?.type === "ice") tags.push(["⟶", "溜冰格"]);
+        if (state.envMutation?.type === "slope") tags.push(["⟵", "伪坡格"]);
+
+        els.abilityBar.hidden = tags.length === 0;
+        if (!tags.length) {
+          els.abilityBar.innerHTML = "";
+          return;
+        }
+        els.abilityBar.innerHTML = tags.map(([icon, label]) => `
+          <span class="ability-tag"><span class="ability-icon">${icon}</span>${label}</span>
+        `).join("");
+      }
+
+      function drawBackground() {
+        const w = state.width;
+        const h = state.height;
+        const sky = ctx.createLinearGradient(0, 0, 0, h);
+        sky.addColorStop(0, "#17213a");
+        sky.addColorStop(0.46, "#22395a");
+        sky.addColorStop(1, "#142026");
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        for (const star of state.bgStars) {
+          const x = (star.x * w + Math.sin(state.time * 0.00018 + star.y * 12) * 18) % w;
+          const y = star.y * h * 0.78;
+          ctx.globalAlpha = star.a;
+          ctx.fillStyle = "#d8f3ff";
+          ctx.beginPath();
+          ctx.arc(x, y, star.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+
+        const ridgeY = h * 0.78;
+        drawRidge(ridgeY, "#172b34", 0.15, 74, 0.00028);
+        drawRidge(ridgeY + 44, "#0f2028", 0.26, 92, 0.00036);
+
+        const mist = ctx.createLinearGradient(0, h * 0.42, 0, h);
+        mist.addColorStop(0, "rgba(123, 216, 255, 0)");
+        mist.addColorStop(0.74, "rgba(123, 216, 255, 0.08)");
+        mist.addColorStop(1, "rgba(8, 14, 24, 0.34)");
+        ctx.fillStyle = mist;
+        ctx.fillRect(0, h * 0.35, w, h * 0.65);
+      }
+
+      function drawRidge(baseY, color, alpha, amp, speed) {
+        const w = state.width;
+        const h = state.height;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        for (let x = 0; x <= w + 20; x += 28) {
+          const y = baseY
+            + Math.sin(x * 0.012 + state.time * speed) * amp * 0.22
+            + Math.sin(x * 0.027 - state.time * speed * 0.7) * amp * 0.14;
+          ctx.lineTo(x, y);
+        }
+        ctx.lineTo(w, h);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawPlatforms() {
+        ensurePlatforms(state.currentIndex + 2);
+        const start = Math.max(0, state.currentIndex - 2);
+        const end = Math.min(state.platforms.length - 1, state.currentIndex + 2);
+        const list = [];
+        for (let i = start; i <= end; i += 1) {
+          const center = getPlatformCenter(i, state.time);
+          const screen = worldToScreen(center.x, center.y);
+          if (screen.y > -140 && screen.y < state.height + 180) {
+            list.push({ index: i, center, screen });
+          }
+        }
+        list.sort((a, b) => a.screen.y - b.screen.y);
+        for (const item of list) {
+          drawPlatform(item.index, item.center);
+        }
+      }
+
+      function drawPlatform(index, center) {
+        const screen = worldToScreen(center.x, center.y);
+        const size = platformSize(index) * state.scale * state.camera.zoom;
+        const halfW = size * 0.62;
+        const halfH = size * 0.31;
+        const depth = clamp(size * 0.22, 14, 29);
+        const isCurrent = index === state.currentIndex;
+        const p = state.platforms[index];
+        const hueShift = p.tint;
+        const topA = hueShift > 0.66 ? "#99d8c7" : hueShift > 0.33 ? "#95c2ec" : "#e0c27e";
+        const topB = hueShift > 0.66 ? "#4ba98d" : hueShift > 0.33 ? "#4e83c8" : "#b07942";
+        const sideA = hueShift > 0.66 ? "#2e6e63" : hueShift > 0.33 ? "#2d557f" : "#6e4b30";
+        const sideB = hueShift > 0.66 ? "#214f4d" : hueShift > 0.33 ? "#203c66" : "#4c3429";
+
+        const top = [
+          [screen.x, screen.y - halfH],
+          [screen.x + halfW, screen.y],
+          [screen.x, screen.y + halfH],
+          [screen.x - halfW, screen.y]
+        ];
+        const bottom = top.map(([x, y]) => [x, y + depth]);
+
+        ctx.save();
+        ctx.shadowColor = "rgba(0, 0, 0, 0.28)";
+        ctx.shadowBlur = 18;
+        ctx.shadowOffsetY = 14;
+
+        ctx.beginPath();
+        ctx.moveTo(top[1][0], top[1][1]);
+        ctx.lineTo(bottom[1][0], bottom[1][1]);
+        ctx.lineTo(bottom[2][0], bottom[2][1]);
+        ctx.lineTo(top[2][0], top[2][1]);
+        ctx.closePath();
+        ctx.fillStyle = sideA;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(top[2][0], top[2][1]);
+        ctx.lineTo(bottom[2][0], bottom[2][1]);
+        ctx.lineTo(bottom[3][0], bottom[3][1]);
+        ctx.lineTo(top[3][0], top[3][1]);
+        ctx.closePath();
+        ctx.fillStyle = sideB;
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        const grad = ctx.createLinearGradient(screen.x - halfW, screen.y - halfH, screen.x + halfW, screen.y + halfH);
+        grad.addColorStop(0, topA);
+        grad.addColorStop(1, topB);
+        ctx.beginPath();
+        top.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.strokeStyle = isCurrent ? "rgba(255, 241, 184, 0.95)" : "rgba(255, 255, 255, 0.22)";
+        ctx.lineWidth = isCurrent ? 3 : 1;
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.16;
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(screen.x - halfW * 0.55, screen.y - halfH * 0.05);
+        ctx.lineTo(screen.x - halfW * 0.1, screen.y - halfH * 0.58);
+        ctx.moveTo(screen.x + halfW * 0.14, screen.y + halfH * 0.48);
+        ctx.lineTo(screen.x + halfW * 0.55, screen.y + halfH * 0.02);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        if (p.special) {
+          drawSpecialTileMark(p.special, screen, halfW, halfH, size, isCurrent);
+        }
+
+        if (p.heart) {
+          drawHeartMark(screen.x, screen.y - halfH * 0.03, clamp(size * 0.07, 5.5, 10), isCurrent);
+        }
+
+        if (triggerSteps.has(index + 1) && !state.triggered.has(index + 1)) {
+          drawChestGlyph(screen.x, screen.y - halfH * 0.7, size * 0.2);
+        }
+
+        ctx.restore();
+      }
+
+      function drawSpecialTileMark(type, screen, halfW, halfH, size, isCurrent) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(screen.x, screen.y - halfH);
+        ctx.lineTo(screen.x + halfW, screen.y);
+        ctx.lineTo(screen.x, screen.y + halfH);
+        ctx.lineTo(screen.x - halfW, screen.y);
+        ctx.closePath();
+        ctx.clip();
+
+        if (type === "ice") {
+          const ice = ctx.createLinearGradient(screen.x - halfW, screen.y - halfH, screen.x + halfW, screen.y + halfH);
+          ice.addColorStop(0, "rgba(174, 239, 255, 0.34)");
+          ice.addColorStop(0.58, "rgba(90, 193, 255, 0.18)");
+          ice.addColorStop(1, "rgba(238, 252, 255, 0.30)");
+          ctx.fillStyle = ice;
+          ctx.fillRect(screen.x - halfW, screen.y - halfH, halfW * 2, halfH * 2);
+          ctx.strokeStyle = isCurrent ? "rgba(237, 253, 255, 0.78)" : "rgba(210, 247, 255, 0.52)";
+          ctx.lineWidth = Math.max(1.2, size * 0.018);
+          for (let i = -1; i <= 2; i += 1) {
+            const offset = i * halfH * 0.36;
+            ctx.beginPath();
+            ctx.moveTo(screen.x - halfW * 0.42, screen.y + offset);
+            ctx.lineTo(screen.x + halfW * 0.42, screen.y + offset - halfH * 0.46);
+            ctx.stroke();
+          }
+        } else if (type === "slope") {
+          const slope = ctx.createLinearGradient(screen.x - halfW, screen.y + halfH, screen.x + halfW, screen.y - halfH);
+          slope.addColorStop(0, "rgba(45, 34, 30, 0.18)");
+          slope.addColorStop(0.52, "rgba(255, 241, 184, 0.10)");
+          slope.addColorStop(1, "rgba(255, 255, 255, 0.22)");
+          ctx.fillStyle = slope;
+          ctx.fillRect(screen.x - halfW, screen.y - halfH, halfW * 2, halfH * 2);
+          ctx.strokeStyle = isCurrent ? "rgba(255, 245, 206, 0.75)" : "rgba(255, 239, 199, 0.44)";
+          ctx.lineWidth = Math.max(1.2, size * 0.017);
+          for (let i = -2; i <= 2; i += 1) {
+            const offset = i * halfH * 0.32;
+            ctx.beginPath();
+            ctx.moveTo(screen.x - halfW * 0.5, screen.y + halfH * 0.42 + offset);
+            ctx.lineTo(screen.x + halfW * 0.52, screen.y - halfH * 0.35 + offset);
+            ctx.stroke();
+          }
+        }
+
+        ctx.restore();
+      }
+
+      function drawHeartMark(x, y, r, glow) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.fillStyle = "#ff4f7c";
+        ctx.strokeStyle = glow ? "rgba(255, 247, 235, 0.86)" : "rgba(255, 247, 235, 0.55)";
+        ctx.lineWidth = Math.max(1, r * 0.18);
+        ctx.beginPath();
+        ctx.moveTo(0, -r * 0.82);
+        ctx.lineTo(r * 1.18, 0);
+        ctx.lineTo(0, r * 0.82);
+        ctx.lineTo(-r * 1.18, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawChestGlyph(x, y, size) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.shadowColor = "rgba(255, 209, 102, 0.55)";
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = "#ffd166";
+        ctx.strokeStyle = "rgba(67, 44, 19, 0.75)";
+        ctx.lineWidth = Math.max(1, size * 0.09);
+        const w = size * 1.15;
+        const h = size * 0.82;
+        ctx.beginPath();
+        ctx.roundRect(-w / 2, -h / 2, w, h, 4);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#9b4f2d";
+        ctx.fillRect(-w / 2, -h * 0.04, w, h * 0.18);
+        ctx.fillStyle = "#fff3b0";
+        ctx.fillRect(-size * 0.08, -h / 2, size * 0.16, h);
+        ctx.restore();
+      }
+
+      function drawPlayerShadow() {
+        if (state.jump || state.fail || state.recover || state.player.z > 4) return;
+        const ground = worldToScreen(state.player.x, state.player.y, 0);
+        const radius = playerRadius() * state.scale * state.camera.zoom;
+        ctx.save();
+        ctx.globalAlpha = 0.18 * state.player.alpha;
+        ctx.fillStyle = "#050912";
+        ctx.beginPath();
+        ctx.ellipse(ground.x, ground.y + radius * 0.72, radius * 1.05, radius * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawPlayer() {
+        const radius = playerRadius() * state.scale * state.camera.zoom;
+        const p = worldToScreen(state.player.x, state.player.y, state.player.z);
+        const squash = state.player.squash;
+        const stretchX = 1 + squash * 0.32;
+        const stretchY = 1 - squash * 0.18;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.globalAlpha = state.player.alpha;
+        ctx.rotate(state.player.tilt);
+        ctx.scale(stretchX, stretchY);
+        ctx.shadowColor = "rgba(19, 22, 24, 0.12)";
+        ctx.shadowBlur = 5;
+        ctx.shadowOffsetY = 3;
+
+        const body = ctx.createLinearGradient(-radius * 1.05, -radius * 1.75, radius * 1.05, radius * 0.85);
+        body.addColorStop(0, "#f5f0e6");
+        body.addColorStop(0.55, "#e5dccb");
+        body.addColorStop(1, "#bfb29f");
+
+        ctx.fillStyle = "#a99d8b";
+        ctx.beginPath();
+        ctx.ellipse(0, radius * 0.72, radius * 1.25, radius * 0.34, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.roundRect(-radius * 1.12, radius * 0.28, radius * 2.24, radius * 0.52, radius * 0.18);
+        ctx.fillStyle = "#d7ccba";
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = body;
+        ctx.beginPath();
+        ctx.moveTo(-radius * 0.28, -radius * 1.08);
+        ctx.bezierCurveTo(-radius * 0.62, -radius * 0.76, -radius * 0.98, -radius * 0.1, -radius * 0.92, radius * 0.32);
+        ctx.quadraticCurveTo(0, radius * 0.58, radius * 0.92, radius * 0.32);
+        ctx.bezierCurveTo(radius * 0.98, -radius * 0.1, radius * 0.62, -radius * 0.76, radius * 0.28, -radius * 1.08);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#b5a895";
+        ctx.beginPath();
+        ctx.ellipse(0, radius * 0.29, radius * 0.94, radius * 0.19, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const ring = ctx.createLinearGradient(-radius * 0.8, -radius * 0.96, radius * 0.8, -radius * 0.66);
+        ring.addColorStop(0, "#f3eee4");
+        ring.addColorStop(1, "#c8baa5");
+        ctx.fillStyle = ring;
+        ctx.beginPath();
+        ctx.ellipse(0, -radius * 0.82, radius * 0.58, radius * 0.18, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const head = ctx.createRadialGradient(-radius * 0.22, -radius * 1.46, radius * 0.08, 0, -radius * 1.35, radius * 0.58);
+        head.addColorStop(0, "#f7f3eb");
+        head.addColorStop(0.7, "#e7dece");
+        head.addColorStop(1, "#bfb29f");
+        ctx.fillStyle = head;
+        ctx.beginPath();
+        ctx.arc(0, -radius * 1.35, radius * 0.48, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(255, 252, 242, 0.28)";
+        ctx.lineWidth = Math.max(1.2, radius * 0.055);
+        ctx.beginPath();
+        ctx.moveTo(-radius * 0.48, -radius * 0.2);
+        ctx.quadraticCurveTo(-radius * 0.18, -radius * 0.74, radius * 0.22, -radius * 0.98);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function drawChargePreview() {
+        if (!state.charge.active) return;
+        const charge = state.charge.value;
+        const player = worldToScreen(state.player.x, state.player.y, state.player.z);
+        const power = jumpPowerCurve(charge);
+        ctx.save();
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        if (state.charge.second && state.jump) {
+          const sign = state.abilities.backwardDouble ? -1 : 1;
+          const end = {
+            x: state.player.x + state.jump.dir.x * lerp(18, 145, power) * sign,
+            y: state.player.y + state.jump.dir.y * lerp(18, 145, power) * sign
+          };
+          const tip = worldToScreen(end.x, end.y, state.player.z);
+          const airColor = state.abilities.backwardDouble ? "rgba(123, 232, 255, 0.98)" : "rgba(255, 236, 145, 0.98)";
+          ctx.strokeStyle = "rgba(5, 12, 24, 0.86)";
+          ctx.lineWidth = 9;
+          ctx.beginPath();
+          ctx.moveTo(player.x, player.y);
+          ctx.lineTo(tip.x, tip.y);
+          ctx.stroke();
+          ctx.strokeStyle = airColor;
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(player.x, player.y);
+          ctx.lineTo(tip.x, tip.y);
+          ctx.stroke();
+          drawLandingRing(tip.x, tip.y, 13 + power * 12, airColor);
+          ctx.restore();
+          return;
+        }
+
+        const prediction = predictedLanding(charge);
+        const dirEnd = worldToScreen(
+          state.player.x + prediction.dir.x * (34 + power * 62),
+          state.player.y + prediction.dir.y * (34 + power * 62),
+          state.player.z
+        );
+        ctx.strokeStyle = "rgba(5, 12, 24, 0.84)";
+        ctx.lineWidth = 10;
+        ctx.beginPath();
+        ctx.moveTo(player.x, player.y + 6);
+        ctx.lineTo(dirEnd.x, dirEnd.y + 6);
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(238, 252, 255, 0.98)";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(player.x, player.y + 6);
+        ctx.lineTo(dirEnd.x, dirEnd.y + 6);
+        ctx.stroke();
+
+        if (state.charge.usePreview) {
+          const target = worldToScreen(prediction.x, prediction.y, 0);
+          const mid = {
+            x: (player.x + target.x) / 2,
+            y: Math.min(player.y, target.y) - clamp(74 + prediction.distance * 0.16, 84, 150) * state.scale
+          };
+          ctx.setLineDash([7, 8]);
+          ctx.strokeStyle = "rgba(5, 12, 24, 0.9)";
+          ctx.lineWidth = 8;
+          ctx.beginPath();
+          ctx.moveTo(player.x, player.y);
+          ctx.quadraticCurveTo(mid.x, mid.y, target.x, target.y);
+          ctx.stroke();
+          ctx.strokeStyle = "rgba(123, 232, 255, 0.98)";
+          ctx.lineWidth = 3.5;
+          ctx.beginPath();
+          ctx.moveTo(player.x, player.y);
+          ctx.quadraticCurveTo(mid.x, mid.y, target.x, target.y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          drawLandingRing(target.x, target.y, 12 + power * 13, "rgba(123, 232, 255, 0.98)");
+        }
+
+        ctx.restore();
+      }
+
+      function drawLandingRing(x, y, radius, color) {
+        ctx.save();
+        ctx.strokeStyle = "rgba(5, 12, 24, 0.9)";
+        ctx.lineWidth = 7;
+        ctx.globalAlpha = 0.9;
+        ctx.beginPath();
+        ctx.ellipse(x, y + radius * 0.32, radius * 1.25, radius * 0.52, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3.5;
+        ctx.globalAlpha = 0.98;
+        ctx.beginPath();
+        ctx.ellipse(x, y + radius * 0.32, radius * 1.25, radius * 0.52, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawHealTexts() {
+        if (!state.healTexts.length) return;
+        const alive = [];
+        for (const item of state.healTexts) {
+          const progress = clamp((state.time - item.startTime) / item.duration, 0, 1);
+          if (progress < 1) alive.push(item);
+
+          const rise = easeOutCubic(progress) * 34;
+          const scale = 0.82 + Math.sin(Math.min(progress, 0.55) / 0.55 * Math.PI) * 0.2;
+          const alpha = progress < 0.72 ? 1 : clamp(1 - (progress - 0.72) / 0.28, 0, 1);
+          const x = item.x;
+          const y = item.y - rise;
+
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.scale(scale, scale);
+          ctx.transform(1, 0, -0.18, 1, 0, 0);
+          ctx.globalAlpha = alpha;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.font = `italic 900 ${Math.round(34 * state.scale)}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+          ctx.lineJoin = "round";
+          const blueTone = item.tone === "blue";
+          const goldTone = item.tone === "gold";
+          ctx.shadowColor = goldTone
+            ? "rgba(255, 209, 102, 0.58)"
+            : blueTone ? "rgba(123, 216, 255, 0.52)" : "rgba(255, 95, 134, 0.52)";
+          ctx.shadowBlur = 18;
+          ctx.strokeStyle = "rgba(5, 13, 20, 0.82)";
+          ctx.lineWidth = 8;
+          ctx.strokeText(item.text, 0, 0);
+
+          const grad = ctx.createLinearGradient(-48, -20, 48, 22);
+          if (goldTone) {
+            grad.addColorStop(0, "#fff4c2");
+            grad.addColorStop(0.52, "#ffd166");
+            grad.addColorStop(1, "#ff9d42");
+          } else if (blueTone) {
+            grad.addColorStop(0, "#e2f8ff");
+            grad.addColorStop(0.52, "#56c8ff");
+            grad.addColorStop(1, "#9be7ff");
+          } else {
+            grad.addColorStop(0, "#ffe1ee");
+            grad.addColorStop(0.52, "#ff5f9c");
+            grad.addColorStop(1, "#ff9bc5");
+          }
+          ctx.fillStyle = grad;
+          ctx.fillText(item.text, 0, 0);
+
+          ctx.shadowBlur = 0;
+          ctx.strokeStyle = goldTone
+            ? "rgba(255, 248, 220, 0.82)"
+            : blueTone ? "rgba(232, 250, 255, 0.78)" : "rgba(255, 238, 247, 0.78)";
+          ctx.lineWidth = 1.4;
+          ctx.strokeText(item.text, 0, 0);
+          ctx.restore();
+        }
+        state.healTexts = alive;
+      }
+
+      function drawVignette() {
+        const w = state.width;
+        const h = state.height;
+        const g = ctx.createRadialGradient(w * 0.5, h * 0.48, h * 0.2, w * 0.5, h * 0.5, h * 0.78);
+        g.addColorStop(0, "rgba(0, 0, 0, 0)");
+        g.addColorStop(1, "rgba(3, 6, 12, 0.45)");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, w, h);
+      }
+
+      function update(now) {
+        state.time = now;
+        if (state.charge.active) {
+          state.charge.value = chargeValue(now);
+        }
+
+        updateCamera();
+        updateJump();
+        updateFailAnimation();
+        updateSlideAnimation();
+        updateRecoverAnimation();
+        updateHud();
+        state.player.squash *= 0.82;
+        state.camera.shake *= 0.86;
+        if (state.camera.shake < 0.1) state.camera.shake = 0;
+        state.camera.pulse *= 0.94;
+
+        draw();
+        requestAnimationFrame(update);
+      }
+
+      function updateCamera() {
+        if (!state.jump && !state.fail && !state.slide && !state.recover) syncPlayerToPlatform();
+        const targetZoom = 1 + state.camera.pulse * 0.12;
+        state.camera.x = lerp(state.camera.x, state.player.x, 0.075);
+        state.camera.y = lerp(state.camera.y, state.player.y, 0.075);
+        state.camera.zoom = lerp(state.camera.zoom, targetZoom, 0.08);
+      }
+
+      function currentAutoTarget(jump) {
+        const center = getPlatformCenter(jump.targetIndex, state.time);
+        return {
+          x: center.x + jump.targetOffset.x,
+          y: center.y + jump.targetOffset.y
+        };
+      }
+
+      function updateJump() {
+        if (!state.jump) return;
+        const jump = state.jump;
+        const progress = clamp((state.time - jump.startTime) / jump.duration, 0, 1);
+        const eased = easeInOut(progress);
+        const target = jump.kind === "auto" ? currentAutoTarget(jump) : jump.to;
+        state.player.x = lerp(jump.from.x, target.x, eased);
+        state.player.y = lerp(jump.from.y, target.y, eased);
+        state.player.z = Math.sin(progress * Math.PI) * jump.height;
+        if (progress >= 1) finishJump();
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, state.width, state.height);
+        drawBackground();
+        drawPlatforms();
+        drawChargePreview();
+        drawPlayerShadow();
+        drawPlayer();
+        drawVignette();
+        drawHealTexts();
+      }
+
+      function onPointerDown(event) {
+        if (event.target.closest?.(".panel, .test-toggle, .guide-button, .guide-layer, .record-layer, .retry-layer")) return;
+        event.preventDefault();
+        unlockAudio();
+        if (state.guideOpen || state.modal || state.recordOpen || state.retryOpen || state.pendingChoice || state.fail || state.slide || state.recover) return;
+        canvas.setPointerCapture?.(event.pointerId);
+        if (canUseSecondJump()) {
+          startCharge(performance.now(), event.pointerId, true);
+        } else if (!state.jump) {
+          startCharge(performance.now(), event.pointerId, false);
+        }
+      }
+
+      function onPointerUp(event) {
+        if (state.charge.pointerId !== null && event.pointerId !== state.charge.pointerId) return;
+        event.preventDefault();
+        releaseCharge(performance.now());
+      }
+
+      function onPointerCancel(event) {
+        if (state.charge.pointerId !== null && event.pointerId !== state.charge.pointerId) return;
+        state.charge.active = false;
+        state.charge.second = false;
+        state.charge.pointerId = null;
+      }
+
+      els.choices.addEventListener("click", event => {
+        const button = event.target.closest(".choice");
+        if (!button) return;
+        chooseOption(Number(button.dataset.choice));
+      });
+
+      els.recordForm.addEventListener("submit", event => {
+        event.preventDefault();
+        finishRecordPrompt(els.recordNameInput.value);
+      });
+
+      els.recordSkip.addEventListener("click", event => {
+        event.preventDefault();
+        finishRecordPrompt("");
+      });
+
+      els.guideButton.addEventListener("click", event => {
+        event.preventDefault();
+        openGuide();
+      });
+
+      els.guideClose.addEventListener("click", event => {
+        event.preventDefault();
+        closeGuide();
+      });
+
+      els.guideLayer.addEventListener("click", event => {
+        event.preventDefault();
+        closeGuide();
+      });
+
+      els.infiniteLifeToggle.checked = state.infiniteLives;
+      els.infiniteLifeToggle.addEventListener("change", () => {
+        state.infiniteLives = els.infiniteLifeToggle.checked;
+        localStorage.setItem(INFINITE_LIFE_KEY, state.infiniteLives ? "1" : "0");
+        if (state.infiniteLives) {
+          state.hearts = MAX_HEARTS;
+          state.pendingRecordScore = 0;
+          closeRecordPrompt();
+        } else {
+          state.runStartBest = state.best;
+        }
+        updateHud();
+        showToast(state.infiniteLives ? "无限生命已开启" : "无限生命已关闭");
+      });
+
+      let resizeFrame = 0;
+      function requestResize() {
+        cancelAnimationFrame(resizeFrame);
+        resizeFrame = requestAnimationFrame(resize);
+      }
+
+      window.addEventListener("resize", requestResize);
+      window.addEventListener("orientationchange", () => setTimeout(requestResize, 90));
+      window.visualViewport?.addEventListener("resize", requestResize);
+      window.visualViewport?.addEventListener("scroll", requestResize);
+      window.addEventListener("contextmenu", event => event.preventDefault());
+      window.addEventListener("selectstart", event => {
+        if (event.target.closest?.(".record-input")) return;
+        event.preventDefault();
+      });
+      window.addEventListener("dragstart", event => event.preventDefault());
+      window.addEventListener("gesturestart", event => event.preventDefault());
+      window.addEventListener("touchmove", event => event.preventDefault(), { passive: false });
+      window.addEventListener("pointerdown", onPointerDown, { passive: false });
+      window.addEventListener("pointerup", onPointerUp, { passive: false });
+      window.addEventListener("pointercancel", onPointerCancel, { passive: false });
+
+      if (!CanvasRenderingContext2D.prototype.roundRect) {
+        CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+          const r = Math.min(radius, width / 2, height / 2);
+          this.beginPath();
+          this.moveTo(x + r, y);
+          this.arcTo(x + width, y, x + width, y + height, r);
+          this.arcTo(x + width, y + height, x, y + height, r);
+          this.arcTo(x, y + height, x, y, r);
+          this.arcTo(x, y, x + width, y, r);
+          this.closePath();
+          return this;
+        };
+      }
+
+      resize();
+      resetGame(true);
+      loadRawSfx("jump");
+      loadRawSfx("land");
+      loadRawSfx("fall");
+      getMusicElement();
+      if (bootParams.has("resetBest")) {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+      const previewParams = new URLSearchParams(window.location.search);
+      if (previewParams.has("healPreview")) {
+        setTimeout(() => triggerHealText(state.currentIndex + 1, 5200), 520);
+      }
+      const artPreview = previewParams.get("artPreview");
+      if (artPreview === "retry") {
+        setTimeout(openRetryPrompt, 520);
+      } else if (artPreview === "record") {
+        setTimeout(() => triggerArtText(state.currentIndex + 1, "打破记录", "gold", 5200), 520);
+      } else if (artPreview === "heart") {
+        setTimeout(() => triggerArtText(state.currentIndex + 1, "正中红心", "pink", 5200), 520);
+      } else if (artPreview === "predict") {
+        setTimeout(() => triggerArtText(state.currentIndex + 1, "落点预测", "blue", 5200), 520);
+      } else if (artPreview === "pair-predict-grow") {
+        setTimeout(() => {
+          triggerArtText(state.currentIndex + 1, "落点预测", "blue", 5200);
+          triggerArtText(state.currentIndex + 1, "平台扩大", "blue", 5200);
+        }, 520);
+      } else if (artPreview === "pair-full-grow") {
+        setTimeout(() => {
+          triggerArtText(state.currentIndex + 1, "回满生命", "pink", 5200);
+          triggerArtText(state.currentIndex + 1, "平台扩大", "blue", 5200);
+        }, 520);
+      } else if (artPreview === "pair-heart-predict") {
+        setTimeout(() => {
+          triggerArtText(state.currentIndex + 1, "正中红心", "pink", 5200);
+          triggerArtText(state.currentIndex + 1, "落点预测", "blue", 5200);
+        }, 520);
+      } else if (artPreview === "stack") {
+        setTimeout(() => {
+          triggerArtText(state.currentIndex + 1, "落点预测", "blue", 5200);
+          triggerArtText(state.currentIndex + 1, "平台扩大", "blue", 5200);
+          triggerArtText(state.currentIndex + 1, "回满生命", "pink", 5200);
+        }, 520);
+      }
+      requestAnimationFrame(update);
+    })();
+  </script>
+</body>
+</html>
