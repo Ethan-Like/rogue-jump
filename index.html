@@ -2498,6 +2498,13 @@
         els.retryLayer.setAttribute("aria-hidden", "true");
       }
 
+      function skipRetryPrompt(event) {
+        if (!state.retryOpen) return;
+        event.preventDefault();
+        event.stopPropagation();
+        resetGame(true);
+      }
+
       function showToast(message) {
         els.toast.textContent = message;
         els.toast.classList.add("show");
@@ -3211,6 +3218,9 @@
         event.preventDefault();
         finishRecordPrompt("");
       });
+
+      els.retryLayer.addEventListener("pointerdown", skipRetryPrompt, { passive: false });
+      els.retryLayer.addEventListener("click", skipRetryPrompt);
 
       els.guideButton.addEventListener("click", event => {
         event.preventDefault();
